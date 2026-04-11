@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: session.user.id,
         email: session.user.email ?? '',
         name: (meta.name as string) ?? session.user.email ?? '',
-        role: (meta.role as UserRole) ?? 'Admin',
+        role: (meta.role as UserRole) ?? 'Laborer',
         org_id: (meta.org_id as string) ?? null,
       })
     }
