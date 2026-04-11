@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 
@@ -10,13 +10,6 @@ export type AuthUser = {
   name: string
   role: UserRole
   org_id: string | null
-}
-
-type AuthContextType = {
-  session: Session | null
-  user: AuthUser | null
-  loading: boolean
-  can: (action: Action) => boolean
 }
 
 export type Action =
@@ -35,7 +28,7 @@ export type Action =
   | 'manage:timeclock'
   | 'approve:edits'
 
-const ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
   Laborer: [
     'view:timeclock',
   ],
@@ -87,23 +80,57 @@ const ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
   ],
 }
 
+type AuthContextType = {
+  session: Session | null
+  user: AuthUser | null
+  loading: boolean
+  can: (action: Action) => boolean
+  refreshPermissions: () => Promise<void>
+}
+
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [customPermissions, setCustomPermissions] = useState<Partial<Record<UserRole, Action[]>>>({})
+  const userRef = useRef<AuthUser | null>(null)
+
+  // Keep ref in sync so refreshPermissions can access current user without stale closure
+  useEffect(() => { userRef.current = user }, [user])
+
+  async function loadPermissions(orgId: string) {
+    const { data } = await supabase
+      .from('settings')
+      .select('role_permissions')
+      .eq('org_id', orgId)
+      .single()
+    const rp = data?.role_permissions
+    if (rp && typeof rp === 'object' && Object.keys(rp).length > 0) {
+      setCustomPermissions(rp as Partial<Record<UserRole, Action[]>>)
+    } else {
+      setCustomPermissions({})
+    }
+  }
+
+  async function refreshPermissions() {
+    const orgId = userRef.current?.org_id
+    if (orgId) await loadPermissions(orgId)
+  }
 
   async function loadProfile(session: import('@supabase/supabase-js').Session) {
     const fallback = () => {
       const meta = session.user.user_metadata ?? {}
-      setUser({
+      const u = {
         id: session.user.id,
         email: session.user.email ?? '',
         name: (meta.name as string) ?? session.user.email ?? '',
         role: (meta.role as UserRole) ?? 'Laborer',
         org_id: (meta.org_id as string) ?? null,
-      })
+      }
+      setUser(u)
+      userRef.current = u
     }
 
     try {
@@ -117,50 +144,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const result = await Promise.race([query, timeout])
 
-      if (!result) {
-        fallback()
-        return
-      }
+      if (!result) { fallback(); return }
 
       const { data: profile, error } = result
+      if (error || !profile) { fallback(); return }
 
-      if (error || !profile) {
-        fallback()
-        return
-      }
-
-      setUser({
+      const u = {
         id: session.user.id,
         email: session.user.email ?? '',
         name: profile.name ?? session.user.email ?? '',
         role: (profile.role as UserRole) ?? 'Admin',
         org_id: profile.org_id ?? null,
-      })
+      }
+      setUser(u)
+      userRef.current = u
+
+      if (profile.org_id) await loadPermissions(profile.org_id)
     } catch {
       fallback()
     }
   }
 
   useEffect(() => {
-    // Get initial session on mount
     const timeout = setTimeout(() => setLoading(false), 5000)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(timeout)
       setSession(session)
-      if (session) {
-        await loadProfile(session)
-      }
+      if (session) await loadProfile(session)
       setLoading(false)
     })
 
-    // Listen for auth changes after that
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       if (session) {
         await loadProfile(session)
       } else {
         setUser(null)
+        setCustomPermissions({})
       }
     })
 
@@ -169,11 +190,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function can(action: Action): boolean {
     if (!user) return false
-    return ROLE_PERMISSIONS[user.role]?.includes(action) ?? false
+    const perms = Object.keys(customPermissions).length > 0 ? customPermissions : DEFAULT_ROLE_PERMISSIONS
+    return (perms[user.role] ?? DEFAULT_ROLE_PERMISSIONS[user.role] ?? []).includes(action)
   }
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, can }}>
+    <AuthContext.Provider value={{ session, user, loading, can, refreshPermissions }}>
       {children}
     </AuthContext.Provider>
   )

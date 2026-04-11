@@ -1,8 +1,26 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, type UserRole, type Action } from '@/context/AuthContext'
 
 export type PayPeriodType = 'weekly' | 'biweekly' | 'semimonthly'
+
+export type DashboardVisibility = {
+  summaryCards: boolean
+  jobsChart: boolean
+  hoursChart: boolean
+  quickActions: boolean
+  recentJobs: boolean
+}
+
+const DEFAULT_DASHBOARD_VISIBILITY: DashboardVisibility = {
+  summaryCards: true,
+  jobsChart: true,
+  hoursChart: true,
+  quickActions: true,
+  recentJobs: true,
+}
+
+export { DEFAULT_DASHBOARD_VISIBILITY }
 
 export type AppSettings = {
   company: {
@@ -26,8 +44,8 @@ export type AppSettings = {
   }
   payPeriod: {
     type: PayPeriodType
-    weeklyStartDay: number    // 0=Sun, 1=Mon ... 6=Sat (for weekly)
-    biweeklyAnchor: string    // reference start date (for biweekly)
+    weeklyStartDay: number
+    biweeklyAnchor: string
   }
   notifications: {
     emailNewJob: boolean
@@ -35,6 +53,8 @@ export type AppSettings = {
     emailEditRequest: boolean
     emailInviteAccepted: boolean
   }
+  rolePermissions: Partial<Record<UserRole, Action[]>>
+  dashboardVisibility: Partial<Record<UserRole, DashboardVisibility>>
 }
 
 const defaultSettings: AppSettings = {
@@ -42,16 +62,20 @@ const defaultSettings: AppSettings = {
   pricing: { wastePct: '10', markupPct: '30', laborPerSq: '85', tearoffRate: '35', hourlyRate: '45', burdenPct: '35' },
   payPeriod: { type: 'biweekly', weeklyStartDay: 1, biweeklyAnchor: new Date().toISOString().split('T')[0] },
   notifications: { emailNewJob: true, emailClockIn: false, emailEditRequest: true, emailInviteAccepted: true },
+  rolePermissions: {},
+  dashboardVisibility: {},
 }
 
 function loadFromStorage(key: string, fallback: AppSettings): AppSettings {
   try {
     const stored = JSON.parse(localStorage.getItem(key) ?? '')
-    const merged = {
+    const merged: AppSettings = {
       company: { ...fallback.company, ...stored.company },
       pricing: { ...fallback.pricing, ...stored.pricing },
       payPeriod: { ...fallback.payPeriod, ...stored.payPeriod },
       notifications: { ...fallback.notifications, ...stored.notifications },
+      rolePermissions: stored.rolePermissions ?? {},
+      dashboardVisibility: stored.dashboardVisibility ?? {},
     }
     delete (merged.payPeriod as Record<string, unknown>).startDate
     delete (merged.payPeriod as Record<string, unknown>).endDate
@@ -65,6 +89,8 @@ function mergeFromDB(row: Record<string, unknown>, fallback: AppSettings): AppSe
     pricing: { ...fallback.pricing, ...(row.pricing as object ?? {}) },
     payPeriod: { ...fallback.payPeriod, ...(row.pay_period as object ?? {}) },
     notifications: { ...fallback.notifications, ...(row.notifications as object ?? {}) },
+    rolePermissions: (row.role_permissions as Partial<Record<UserRole, Action[]>>) ?? {},
+    dashboardVisibility: (row.dashboard_visibility as Partial<Record<UserRole, DashboardVisibility>>) ?? {},
   }
 }
 
@@ -77,15 +103,14 @@ type SettingsContextType = {
 const SettingsContext = createContext<SettingsContextType | null>(null)
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, refreshPermissions } = useAuth()
   const [settings, setSettings] = useState<AppSettings>(() => loadFromStorage('rl_settings', defaultSettings))
 
-  // Hydrate from Supabase when org_id is available
   useEffect(() => {
     if (!user?.org_id) return
     supabase
       .from('settings')
-      .select('company, pricing, pay_period')
+      .select('company, pricing, pay_period, notifications, role_permissions, dashboard_visibility')
       .eq('org_id', user.org_id)
       .single()
       .then(({ data }) => {
@@ -105,13 +130,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       pricing: settings.pricing,
       pay_period: settings.payPeriod,
       notifications: settings.notifications,
+      role_permissions: settings.rolePermissions,
+      dashboard_visibility: settings.dashboardVisibility,
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase.from('settings').upsert(payload, { onConflict: 'org_id' })
     if (!error) {
       localStorage.setItem('rl_settings', JSON.stringify(settings))
+      await refreshPermissions()
     }
-  }, [user?.org_id, settings])
+  }, [user?.org_id, settings, refreshPermissions])
 
   return (
     <SettingsContext.Provider value={{ settings, setSettings, saveSettings }}>
@@ -156,7 +184,6 @@ export function getPayPeriodRange(settings: AppSettings): { start: string; end: 
     }
   }
 
-  // biweekly — find which 14-day window we're in based on anchor
   const anchor = new Date(biweeklyAnchor)
   anchor.setHours(0, 0, 0, 0)
   const msPerDay = 86400000

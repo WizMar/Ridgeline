@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check, LayoutDashboard } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { useSettings, getPayPeriodRange, type PayPeriodType, DAY_NAMES } from '@/context/SettingsContext'
-import { useAuth } from '@/context/AuthContext'
+import { useSettings, getPayPeriodRange, type PayPeriodType, type DashboardVisibility, DEFAULT_DASHBOARD_VISIBILITY, DAY_NAMES } from '@/context/SettingsContext'
+import { useAuth, DEFAULT_ROLE_PERMISSIONS, type UserRole, type Action } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 
 const TRADES = [
@@ -26,31 +26,43 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
 ]
 
-const ROLE_MATRIX = [
-  { label: 'Dashboard',        actions: [true,  true,  true,  true,  false, false] },
-  { label: 'Time Clock',       actions: [true,  true,  true,  true,  true,  true ] },
-  { label: 'Manage Time',      actions: [true,  true,  true,  false, false, false] },
-  { label: 'Approve Edits',    actions: [true,  true,  false, false, false, false] },
-  { label: 'View All Jobs',    actions: [true,  true,  true,  true,  false, false] },
-  { label: 'Create Jobs',      actions: [true,  true,  false, true,  false, false] },
-  { label: 'Estimates',        actions: [true,  false, false, true,  false, false] },
-  { label: 'Employees',        actions: [true,  true,  false, false, false, false] },
-  { label: 'Invite Members',   actions: [true,  true,  false, false, false, false] },
-  { label: 'Settings',         actions: [true,  false, false, false, false, false] },
+// Maps human label -> Action key. Admin column is locked (always full access).
+const PERMISSION_ROWS: { label: string; action: Action; lockForAdmin?: boolean }[] = [
+  { label: 'Dashboard',         action: 'view:dashboard' },
+  { label: 'Time Clock',        action: 'view:timeclock' },
+  { label: 'Manage Time',       action: 'manage:timeclock' },
+  { label: 'Approve Edits',     action: 'approve:edits' },
+  { label: 'View All Jobs',     action: 'view:jobs:all' },
+  { label: 'Create Jobs',       action: 'create:jobs' },
+  { label: 'View Estimates',    action: 'view:estimates' },
+  { label: 'Create Estimates',  action: 'create:estimates' },
+  { label: 'View Employees',    action: 'view:employees' },
+  { label: 'Manage Employees',  action: 'manage:employees' },
+  { label: 'Invite Members',    action: 'invite:members' },
+  { label: 'Settings',          action: 'manage:settings' },
 ]
 
-const ROLE_NAMES = ['Admin', 'Sub-Admin', 'Lead', 'Sales', 'Employee', 'Laborer']
+const ROLE_NAMES: UserRole[] = ['Admin', 'Sub-Admin', 'Lead', 'Sales', 'Employee', 'Laborer']
 
-type Section = 'company' | 'pricing' | 'payperiod' | 'roles' | 'notifications' | 'subscription' | 'danger'
+const DASHBOARD_WIDGETS: { key: keyof DashboardVisibility; label: string; description: string }[] = [
+  { key: 'summaryCards', label: 'Summary Cards',    description: 'Active jobs, clocked in, estimates, revenue' },
+  { key: 'jobsChart',    label: 'Jobs by Status',   description: 'Pie chart showing job status distribution' },
+  { key: 'hoursChart',   label: 'Hours This Period', description: 'Bar chart of hours logged per employee' },
+  { key: 'quickActions', label: 'Quick Actions',    description: 'Shortcut buttons to create jobs, estimates, etc.' },
+  { key: 'recentJobs',   label: 'Recent Jobs',      description: 'Table of the 5 most recently created jobs' },
+]
+
+type Section = 'company' | 'pricing' | 'payperiod' | 'roles' | 'dashboard' | 'notifications' | 'subscription' | 'danger'
 
 const SECTIONS: { id: Section; label: string; description: string; icon: React.ElementType }[] = [
-  { id: 'company',       label: 'Company',          description: 'Business info, branding & trade',    icon: Building2     },
-  { id: 'pricing',       label: 'Pricing Defaults', description: 'Markup, waste & labor rates',        icon: DollarSign    },
-  { id: 'payperiod',     label: 'Pay Period',        description: 'Pay cycle & schedule',               icon: Calendar      },
-  { id: 'roles',         label: 'Roles & Access',   description: 'Permissions & team access controls', icon: Shield        },
-  { id: 'notifications', label: 'Notifications',    description: 'Email & push preferences',           icon: Bell          },
-  { id: 'subscription',  label: 'Subscription',     description: 'Plan & billing',                     icon: CreditCard    },
-  { id: 'danger',        label: 'Danger Zone',      description: 'Account & data management',          icon: AlertTriangle },
+  { id: 'company',       label: 'Company',          description: 'Business info, branding & trade',       icon: Building2        },
+  { id: 'pricing',       label: 'Pricing Defaults', description: 'Markup, waste & labor rates',           icon: DollarSign       },
+  { id: 'payperiod',     label: 'Pay Period',        description: 'Pay cycle & schedule',                  icon: Calendar         },
+  { id: 'roles',         label: 'Roles & Access',   description: 'Edit permissions per role',             icon: Shield           },
+  { id: 'dashboard',     label: 'Dashboard',        description: 'Control what each role sees',           icon: LayoutDashboard  },
+  { id: 'notifications', label: 'Notifications',    description: 'Email & push preferences',              icon: Bell             },
+  { id: 'subscription',  label: 'Subscription',     description: 'Plan & billing',                        icon: CreditCard       },
+  { id: 'danger',        label: 'Danger Zone',      description: 'Account & data management',             icon: AlertTriangle    },
 ]
 
 export default function SettingsPage() {
@@ -345,7 +357,9 @@ export default function SettingsPage() {
           <Card className="bg-stone-900 border-stone-800 text-white">
             <CardHeader>
               <CardTitle className="text-white">Role Permissions</CardTitle>
-              <CardDescription className="text-stone-400">What each role can access in your organization.</CardDescription>
+              <CardDescription className="text-stone-400">
+                Check or uncheck permissions per role. Admin always has full access.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -353,27 +367,56 @@ export default function SettingsPage() {
                   <thead>
                     <tr>
                       <th className="text-left text-stone-400 font-medium pb-3 pr-4">Permission</th>
-                      {ROLE_NAMES.map(r => (
-                        <th key={r} className="text-center text-stone-400 font-medium pb-3 px-2 whitespace-nowrap">{r}</th>
+                      {ROLE_NAMES.map(role => (
+                        <th key={role} className="text-center text-stone-400 font-medium pb-3 px-2 whitespace-nowrap">{role}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-800">
-                    {ROLE_MATRIX.map(({ label, actions }) => (
-                      <tr key={label}>
+                    {PERMISSION_ROWS.map(({ label, action }) => (
+                      <tr key={action}>
                         <td className="text-stone-300 py-2.5 pr-4 whitespace-nowrap">{label}</td>
-                        {actions.map((allowed, i) => (
-                          <td key={i} className="text-center py-2.5 px-2">
-                            {allowed
-                              ? <span className="inline-block w-4 h-4 rounded-full bg-emerald-600/30 text-emerald-400 text-[10px] leading-4">✓</span>
-                              : <span className="inline-block w-4 h-4 rounded-full bg-stone-800 text-stone-600 text-[10px] leading-4">—</span>
-                            }
-                          </td>
-                        ))}
+                        {ROLE_NAMES.map(role => {
+                          const isAdmin = role === 'Admin'
+                          const effectivePerms = settings.rolePermissions[role] ?? DEFAULT_ROLE_PERMISSIONS[role] ?? []
+                          const checked = effectivePerms.includes(action)
+                          return (
+                            <td key={role} className="text-center py-2.5 px-2">
+                              {isAdmin ? (
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600/30 text-emerald-400 text-[10px]">✓</span>
+                              ) : (
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    const current = settings.rolePermissions[role] ?? DEFAULT_ROLE_PERMISSIONS[role] ?? []
+                                    const updated = checked
+                                      ? current.filter(a => a !== action)
+                                      : [...current, action]
+                                    setSettings(s => ({
+                                      ...s,
+                                      rolePermissions: { ...s.rolePermissions, [role]: updated as Action[] },
+                                    }))
+                                  }}
+                                  className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                                />
+                              )}
+                            </td>
+                          )
+                        })}
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="pt-4 flex items-center gap-3">
+                <SaveButton />
+                <button
+                  onClick={() => setSettings(s => ({ ...s, rolePermissions: {} }))}
+                  className="text-xs text-stone-500 hover:text-stone-300 underline"
+                >
+                  Reset to defaults
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -395,6 +438,46 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Dashboard Visibility ─────────────────────────────────────────────���───
+  if (activeSection === 'dashboard') {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <SectionHeader />
+        <div className="space-y-3">
+          <p className="text-stone-400 text-sm">Choose which dashboard widgets each role can see.</p>
+          <Accordion type="multiple" defaultValue={ROLE_NAMES.filter(r => r !== 'Employee' && r !== 'Laborer')} className="space-y-3">
+            {ROLE_NAMES.filter(r => DEFAULT_ROLE_PERMISSIONS[r]?.includes('view:dashboard')).map(role => {
+              const vis: DashboardVisibility = { ...DEFAULT_DASHBOARD_VISIBILITY, ...(settings.dashboardVisibility[role] ?? {}) }
+              return (
+                <AccordionItem key={role} value={role} className="bg-stone-900 border border-stone-800 rounded-xl px-4">
+                  <AccordionTrigger className="text-white font-medium hover:no-underline py-4">{role}</AccordionTrigger>
+                  <AccordionContent className="pb-4 space-y-1">
+                    {DASHBOARD_WIDGETS.map(({ key, label, description }) => (
+                      <ToggleRow
+                        key={key}
+                        label={label}
+                        description={description}
+                        checked={vis[key]}
+                        onCheckedChange={v => setSettings(s => ({
+                          ...s,
+                          dashboardVisibility: {
+                            ...s.dashboardVisibility,
+                            [role]: { ...DEFAULT_DASHBOARD_VISIBILITY, ...(s.dashboardVisibility[role] ?? {}), [key]: v },
+                          },
+                        }))}
+                      />
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
+          </Accordion>
+          <SaveButton />
         </div>
       </div>
     )
