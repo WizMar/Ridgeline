@@ -183,7 +183,7 @@ export default function SettingsPage() {
             <AccordionContent className="pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Company Name">
-                  <Input value={company.name} onChange={e => set('company', 'name', e.target.value)} placeholder="Acme Roofing" />
+                  <Input value={company.name} onChange={e => set('company', 'name', e.target.value)} placeholder="Acme Contractors" />
                 </Field>
                 <Field label="Phone">
                   <Input value={company.phone} onChange={e => set('company', 'phone', e.target.value)} placeholder="(555) 000-0000" />
@@ -275,10 +275,10 @@ export default function SettingsPage() {
               <Field label="Markup %" hint="Profit margin applied on top of costs.">
                 <Input type="number" value={pricing.markupPct} onChange={e => set('pricing', 'markupPct', e.target.value)} />
               </Field>
-              <Field label="Labor per Square ($)" hint="Labor cost per roofing square (100 sq ft).">
+              <Field label="Unit Labor Rate ($)" hint="Labor cost per unit of work (e.g. per sq ft, per item).">
                 <Input type="number" value={pricing.laborPerSq} onChange={e => set('pricing', 'laborPerSq', e.target.value)} />
               </Field>
-              <Field label="Tear-off Rate per Square ($)" hint="Cost to remove old material per square.">
+              <Field label="Demo / Removal Rate ($)" hint="Cost to remove or demo existing work per unit.">
                 <Input type="number" value={pricing.tearoffRate} onChange={e => set('pricing', 'tearoffRate', e.target.value)} />
               </Field>
               <Field label="Hourly Rate ($)" hint="Default billable hourly rate.">
