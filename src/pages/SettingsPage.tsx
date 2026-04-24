@@ -192,7 +192,7 @@ export default function SettingsPage() {
                   <Input value={company.email} onChange={e => set('company', 'email', e.target.value)} placeholder="info@company.com" />
                 </Field>
                 <Field label="License #">
-                  <Input value={company.license} onChange={e => set('company', 'license', e.target.value)} placeholder="CA C-39 #000000" />
+                  <Input value={company.license} onChange={e => set('company', 'license', e.target.value)} placeholder="LIC-000000" />
                 </Field>
                 <Field label="Address" className="sm:col-span-2">
                   <Input value={company.address} onChange={e => set('company', 'address', e.target.value)} placeholder="123 Main St, City, CA 00000" />
