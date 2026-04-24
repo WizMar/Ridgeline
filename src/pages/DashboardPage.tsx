@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useEmployees } from '@/context/EmployeeContext'
@@ -62,42 +63,43 @@ export default function DashboardPage() {
       {/* Page Title */}
       <div>
         <h2 className="text-2xl font-bold text-white">Dashboard</h2>
-        <p className="text-stone-400 text-sm mt-1">Here's what's going on with your business.</p>
+        <p className="text-zinc-400 text-sm mt-1">Here's what's going on with your business.</p>
       </div>
 
       {/* Summary Cards */}
       {vis.summaryCards && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-stone-400">Active Jobs</CardTitle>
+              <CardTitle className="text-sm font-medium text-zinc-400">Active Jobs</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-emerald-400">{activeJobs}</p>
+              <p className="text-3xl font-semibold tabular-nums text-white">{activeJobs}</p>
             </CardContent>
           </Card>
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-stone-400">Pending Estimates</CardTitle>
+              <CardTitle className="text-sm font-medium text-zinc-400">Pending Estimates</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-yellow-400">{pendingEstimates}</p>
+              <p className="text-3xl font-semibold tabular-nums text-white">{pendingEstimates}</p>
             </CardContent>
           </Card>
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-stone-400">Clocked In Now</CardTitle>
+              <CardTitle className="text-sm font-medium text-zinc-400">Clocked In Now</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-blue-400">{activeEntries.length}</p>
+              <p className="text-3xl font-semibold tabular-nums text-white">{activeEntries.length}</p>
             </CardContent>
           </Card>
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-stone-400">Revenue This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-zinc-400">Revenue This Month</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-emerald-400">$0</p>
+              <p className="text-3xl font-semibold tabular-nums text-zinc-600">—</p>
+              <p className="text-xs text-zinc-500 mt-1">Coming soon</p>
             </CardContent>
           </Card>
         </div>
@@ -107,13 +109,13 @@ export default function DashboardPage() {
       {(vis.jobsChart || vis.hoursChart) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {vis.jobsChart && (
-            <Card className="bg-stone-900 border-stone-800 text-white">
+            <Card className="bg-zinc-900 border-zinc-800 text-white">
               <CardHeader>
                 <CardTitle className="text-white text-base">Jobs by Status</CardTitle>
               </CardHeader>
               <CardContent>
                 {!hasJobData ? (
-                  <div className="h-48 flex items-center justify-center text-stone-500 text-sm">No jobs yet.</div>
+                  <div className="h-48 flex items-center justify-center text-zinc-500 text-sm">No jobs yet.</div>
                 ) : (
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
@@ -122,13 +124,13 @@ export default function DashboardPage() {
                           <Cell key={entry.name} fill={STATUS_COLORS[entry.name as JobStatus]} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#1c1917', border: '1px solid #44403c', color: '#fff', borderRadius: '8px' }} labelStyle={{ color: '#a8a29e' }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', color: '#fff', borderRadius: '8px' }} labelStyle={{ color: '#a1a1aa' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
                 <div className="flex flex-wrap gap-2 mt-2">
                   {jobStatusData.map(s => (
-                    <div key={s.name} className="flex items-center gap-1 text-xs text-stone-400">
+                    <div key={s.name} className="flex items-center gap-1 text-xs text-zinc-400">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.name as JobStatus] }} />
                       {s.name} ({s.value})
                     </div>
@@ -139,28 +141,28 @@ export default function DashboardPage() {
           )}
 
           {vis.hoursChart && (
-            <Card className="bg-stone-900 border-stone-800 text-white">
+            <Card className="bg-zinc-900 border-zinc-800 text-white">
               <CardHeader>
                 <CardTitle className="text-white text-base">
                   Hours This Pay Period
-                  <span className="text-stone-500 text-xs font-normal ml-2">({payPeriod.start} – {payPeriod.end})</span>
+                  <span className="text-zinc-500 text-xs font-normal ml-2">({payPeriod.start} – {payPeriod.end})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {periodHours.length === 0 ? (
-                  <div className="h-48 flex items-center justify-center text-stone-500 text-sm">No hours logged this pay period.</div>
+                  <div className="h-48 flex items-center justify-center text-zinc-500 text-sm">No hours logged this pay period.</div>
                 ) : (
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={periodHours} margin={{ top: 5, right: 10, left: -10, bottom: 5 }} style={{ background: 'transparent' }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#44403c" />
-                      <XAxis dataKey="name" tick={{ fill: '#a8a29e', fontSize: 12 }} />
-                      <YAxis tick={{ fill: '#a8a29e', fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                      <XAxis dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
+                      <YAxis tick={{ fill: '#a1a1aa', fontSize: 12 }} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#1c1917', border: '1px solid #44403c', color: '#fff', borderRadius: '8px' }}
-                        labelStyle={{ color: '#a8a29e' }}
+                        contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', color: '#fff', borderRadius: '8px' }}
+                        labelStyle={{ color: '#a1a1aa' }}
                         formatter={(v) => [fmtHours(Number(v)), 'Hours']}
                       />
-                      <Bar dataKey="hours" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={48} cursor="default" />
+                      <Bar dataKey="hours" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={48} cursor="default" />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -175,14 +177,14 @@ export default function DashboardPage() {
         <div>
           <h3 className="text-lg font-semibold text-white mb-3">Quick Actions</h3>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => navigate('/estimates')} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-              + New Estimate
-            </Button>
-            <Button onClick={() => navigate('/jobs')} className="bg-stone-700 hover:bg-stone-600 text-white">
+            <Button onClick={() => navigate('/jobs')} className="bg-amber-600 hover:bg-amber-500 text-white">
               + New Job
             </Button>
-            <Button onClick={() => navigate('/employees')} className="bg-stone-700 hover:bg-stone-600 text-white">
+            <Button onClick={() => navigate('/employees')} className="bg-zinc-700 hover:bg-zinc-600 text-white">
               + Add Employee
+            </Button>
+            <Button disabled className="bg-zinc-800 text-zinc-500 cursor-not-allowed">
+              + New Estimate <span className="ml-1.5 text-xs bg-zinc-700 text-zinc-400 px-1.5 py-0.5 rounded">Soon</span>
             </Button>
           </div>
         </div>
@@ -193,21 +195,25 @@ export default function DashboardPage() {
         <div>
           <h3 className="text-lg font-semibold text-white mb-3">Recent Jobs</h3>
           {recentJobs.length === 0 ? (
-            <Card className="bg-stone-900 border-stone-800">
-              <CardContent className="py-12 text-center text-stone-500">
-                No jobs yet. Create your first job to get started.
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardContent className="py-12 flex flex-col items-center gap-3 text-center">
+                <Briefcase className="w-10 h-10 text-zinc-600" strokeWidth={1.5} />
+                <p className="text-zinc-500 text-sm">No jobs yet.</p>
+                <Button onClick={() => navigate('/jobs')} className="bg-amber-600 hover:bg-amber-500 text-white mt-1">
+                  + Create First Job
+                </Button>
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-stone-900 border-stone-800">
+            <Card className="bg-zinc-900 border-zinc-800">
               <CardContent className="p-0">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-stone-800">
-                      <th className="text-left text-stone-400 font-medium px-4 py-3">Job</th>
-                      <th className="text-left text-stone-400 font-medium px-4 py-3">Client</th>
-                      <th className="text-left text-stone-400 font-medium px-4 py-3 hidden sm:table-cell">Type</th>
-                      <th className="text-left text-stone-400 font-medium px-4 py-3">Status</th>
+                    <tr className="border-b border-zinc-800">
+                      <th className="text-left text-zinc-400 font-medium px-4 py-3">Job</th>
+                      <th className="text-left text-zinc-400 font-medium px-4 py-3">Client</th>
+                      <th className="text-left text-zinc-400 font-medium px-4 py-3 hidden sm:table-cell">Type</th>
+                      <th className="text-left text-zinc-400 font-medium px-4 py-3">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -215,11 +221,11 @@ export default function DashboardPage() {
                       <tr
                         key={job.id}
                         onClick={() => navigate('/jobs')}
-                        className={`cursor-pointer hover:bg-stone-800/50 transition-colors ${i < recentJobs.length - 1 ? 'border-b border-stone-800/50' : ''}`}
+                        className={`cursor-pointer hover:bg-zinc-800/50 transition-colors ${i < recentJobs.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
                       >
                         <td className="px-4 py-3 text-white font-medium">{job.title}</td>
-                        <td className="px-4 py-3 text-stone-300">{job.client.name}</td>
-                        <td className="px-4 py-3 text-stone-400 hidden sm:table-cell">{job.type}</td>
+                        <td className="px-4 py-3 text-zinc-300">{job.client.name}</td>
+                        <td className="px-4 py-3 text-zinc-400 hidden sm:table-cell">{job.type}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[job.status]}`}>
                             {job.status}

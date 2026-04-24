@@ -116,7 +116,7 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto space-y-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Settings</h2>
-          <p className="text-stone-400 text-sm mt-1">Manage your company, team, and preferences.</p>
+          <p className="text-zinc-400 text-sm mt-1">Manage your company, team, and preferences.</p>
         </div>
         <div className="space-y-2">
           {SECTIONS.map(({ id, label, description, icon: Icon }) => (
@@ -125,17 +125,17 @@ export default function SettingsPage() {
               onClick={() => setActiveSection(id)}
               className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-colors text-left
                 ${id === 'danger'
-                  ? 'border-red-900/50 bg-stone-900 hover:border-red-700 hover:bg-red-950/20'
-                  : 'border-stone-800 bg-stone-900 hover:border-stone-600 hover:bg-stone-800'}`}
+                  ? 'border-red-900/50 bg-zinc-900 hover:border-red-700 hover:bg-red-950/20'
+                  : 'border-zinc-800 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800'}`}
             >
-              <div className={`p-2 rounded-lg ${id === 'danger' ? 'bg-red-950 text-red-400' : 'bg-stone-800 text-emerald-400'}`}>
+              <div className={`p-2 rounded-lg ${id === 'danger' ? 'bg-red-950 text-red-400' : 'bg-zinc-800 text-amber-400'}`}>
                 <Icon size={18} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${id === 'danger' ? 'text-red-400' : 'text-white'}`}>{label}</p>
-                <p className="text-stone-500 text-xs mt-0.5">{description}</p>
+                <p className="text-zinc-500 text-xs mt-0.5">{description}</p>
               </div>
-              <ChevronRight size={16} className="text-stone-600 flex-shrink-0" />
+              <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
             </button>
           ))}
         </div>
@@ -151,13 +151,13 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => setActiveSection(null)}
-          className="p-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors"
+          className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
         >
           <ArrowLeft size={16} />
         </button>
         <div>
           <h2 className="text-xl font-bold text-white">{currentSection.label}</h2>
-          <p className="text-stone-400 text-xs">{currentSection.description}</p>
+          <p className="text-zinc-400 text-xs">{currentSection.description}</p>
         </div>
       </div>
     )
@@ -165,7 +165,7 @@ export default function SettingsPage() {
 
   function SaveButton() {
     return (
-      <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white mt-2">
+      <Button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white mt-2">
         {saved ? <><Check size={14} className="mr-1.5" />Saved</> : 'Save Changes'}
       </Button>
     )
@@ -178,7 +178,7 @@ export default function SettingsPage() {
         <SectionHeader />
         <Accordion type="multiple" defaultValue={['info', 'branding', 'trade']} className="space-y-3">
 
-          <AccordionItem value="info" className="bg-stone-900 border border-stone-800 rounded-xl px-4">
+          <AccordionItem value="info" className="bg-zinc-900 border border-zinc-800 rounded-xl px-4">
             <AccordionTrigger className="text-white font-medium hover:no-underline py-4">Business Info</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -205,7 +205,7 @@ export default function SettingsPage() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="branding" className="bg-stone-900 border border-stone-800 rounded-xl px-4">
+          <AccordionItem value="branding" className="bg-zinc-900 border border-zinc-800 rounded-xl px-4">
             <AccordionTrigger className="text-white font-medium hover:no-underline py-4">Branding</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div className="space-y-4">
@@ -213,9 +213,9 @@ export default function SettingsPage() {
                   <Input value={company.logoUrl} onChange={e => set('company', 'logoUrl', e.target.value)} placeholder="https://yourcompany.com/logo.png" />
                 </Field>
                 {company.logoUrl && (
-                  <div className="bg-stone-800 rounded-lg p-3 flex items-center gap-3">
+                  <div className="bg-zinc-800 rounded-lg p-3 flex items-center gap-3">
                     <img src={company.logoUrl} alt="Logo preview" className="h-10 w-auto object-contain rounded" onError={e => (e.currentTarget.style.display = 'none')} />
-                    <p className="text-stone-400 text-xs">Logo preview</p>
+                    <p className="text-zinc-400 text-xs">Logo preview</p>
                   </div>
                 )}
               </div>
@@ -223,26 +223,26 @@ export default function SettingsPage() {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="trade" className="bg-stone-900 border border-stone-800 rounded-xl px-4">
+          <AccordionItem value="trade" className="bg-zinc-900 border border-zinc-800 rounded-xl px-4">
             <AccordionTrigger className="text-white font-medium hover:no-underline py-4">Trade & Location</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Trade">
                   <Select value={company.trade} onValueChange={v => set('company', 'trade', v)}>
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-white">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                       <SelectValue placeholder="Select trade..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       {TRADES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </Field>
                 <Field label="Timezone">
                   <Select value={company.timezone} onValueChange={v => set('company', 'timezone', v)}>
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-white">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       {TIMEZONES.map(tz => <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -262,10 +262,10 @@ export default function SettingsPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader>
             <CardTitle className="text-white">Pricing Defaults</CardTitle>
-            <CardDescription className="text-stone-400">Default values used when creating new estimates.</CardDescription>
+            <CardDescription className="text-zinc-400">Default values used when creating new estimates.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -300,17 +300,17 @@ export default function SettingsPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader>
             <CardTitle className="text-white">Pay Period</CardTitle>
-            <CardDescription className="text-stone-400">Set how your employees are paid and when the period starts.</CardDescription>
+            <CardDescription className="text-zinc-400">Set how your employees are paid and when the period starts.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Pay Period Type">
                 <Select value={payPeriod.type} onValueChange={v => setSettings(s => ({ ...s, payPeriod: { ...s.payPeriod, type: v as PayPeriodType } }))}>
-                  <SelectTrigger className="bg-stone-800 border-stone-700 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="biweekly">Biweekly (every 2 weeks)</SelectItem>
                     <SelectItem value="semimonthly">Semimonthly (1st &amp; 15th)</SelectItem>
@@ -320,8 +320,8 @@ export default function SettingsPage() {
               {payPeriod.type === 'weekly' && (
                 <Field label="Week Starts On">
                   <Select value={String(payPeriod.weeklyStartDay)} onValueChange={v => setSettings(s => ({ ...s, payPeriod: { ...s.payPeriod, weeklyStartDay: Number(v) } }))}>
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-white"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       {DAY_NAMES.map((day, i) => <SelectItem key={i} value={String(i)}>{day}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -334,12 +334,12 @@ export default function SettingsPage() {
                 </Field>
               )}
             </div>
-            <div className="bg-stone-800 rounded-lg p-3 text-sm">
-              <p className="text-stone-400 text-xs mb-1">Current Pay Period</p>
-              <p className="text-emerald-400 font-medium">
+            <div className="bg-zinc-800 rounded-lg p-3 text-sm">
+              <p className="text-zinc-400 text-xs mb-1">Current Pay Period</p>
+              <p className="text-amber-400 font-medium">
                 {getPayPeriodRange(settings).start} – {getPayPeriodRange(settings).end}
               </p>
-              <p className="text-stone-500 text-xs mt-1">Updates automatically — no manual changes needed.</p>
+              <p className="text-zinc-500 text-xs mt-1">Updates automatically — no manual changes needed.</p>
             </div>
             <SaveButton />
           </CardContent>
@@ -354,10 +354,10 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
         <div className="space-y-4">
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader>
               <CardTitle className="text-white">Role Permissions</CardTitle>
-              <CardDescription className="text-stone-400">
+              <CardDescription className="text-zinc-400">
                 Check or uncheck permissions per role. Admin always has full access.
               </CardDescription>
             </CardHeader>
@@ -366,16 +366,16 @@ export default function SettingsPage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr>
-                      <th className="text-left text-stone-400 font-medium pb-3 pr-4">Permission</th>
+                      <th className="text-left text-zinc-400 font-medium pb-3 pr-4">Permission</th>
                       {ROLE_NAMES.map(role => (
-                        <th key={role} className="text-center text-stone-400 font-medium pb-3 px-2 whitespace-nowrap">{role}</th>
+                        <th key={role} className="text-center text-zinc-400 font-medium pb-3 px-2 whitespace-nowrap">{role}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-800">
+                  <tbody className="divide-y divide-zinc-800">
                     {PERMISSION_ROWS.map(({ label, action }) => (
                       <tr key={action}>
-                        <td className="text-stone-300 py-2.5 pr-4 whitespace-nowrap">{label}</td>
+                        <td className="text-zinc-300 py-2.5 pr-4 whitespace-nowrap">{label}</td>
                         {ROLE_NAMES.map(role => {
                           const isAdmin = role === 'Admin'
                           const effectivePerms = settings.rolePermissions[role] ?? DEFAULT_ROLE_PERMISSIONS[role] ?? []
@@ -383,7 +383,7 @@ export default function SettingsPage() {
                           return (
                             <td key={role} className="text-center py-2.5 px-2">
                               {isAdmin ? (
-                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600/30 text-emerald-400 text-[10px]">✓</span>
+                                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-600/30 text-amber-400 text-[10px]">✓</span>
                               ) : (
                                 <input
                                   type="checkbox"
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                                       rolePermissions: { ...s.rolePermissions, [role]: updated as Action[] },
                                     }))
                                   }}
-                                  className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                                  className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
                                 />
                               )}
                             </td>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                 <SaveButton />
                 <button
                   onClick={() => setSettings(s => ({ ...s, rolePermissions: {} }))}
-                  className="text-xs text-stone-500 hover:text-stone-300 underline"
+                  className="text-xs text-zinc-500 hover:text-zinc-300 underline"
                 >
                   Reset to defaults
                 </button>
@@ -421,10 +421,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-stone-900 border-stone-800 text-white">
+          <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardHeader>
               <CardTitle className="text-white">Team Access Controls</CardTitle>
-              <CardDescription className="text-stone-400">Fine-tune what your team can do.</CardDescription>
+              <CardDescription className="text-zinc-400">Fine-tune what your team can do.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ToggleRow
@@ -433,7 +433,7 @@ export default function SettingsPage() {
                 checked={subAdminCanInvite}
                 onCheckedChange={setSubAdminCanInvite}
               />
-              <Button onClick={saveAccessSettings} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+              <Button onClick={saveAccessSettings} className="bg-amber-600 hover:bg-amber-500 text-white">
                 {accessSaved ? <><Check size={14} className="mr-1.5" />Saved</> : 'Save Changes'}
               </Button>
             </CardContent>
@@ -449,12 +449,12 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
         <div className="space-y-3">
-          <p className="text-stone-400 text-sm">Choose which dashboard widgets each role can see.</p>
+          <p className="text-zinc-400 text-sm">Choose which dashboard widgets each role can see.</p>
           <Accordion type="multiple" defaultValue={ROLE_NAMES.filter(r => r !== 'Employee' && r !== 'Laborer')} className="space-y-3">
             {ROLE_NAMES.filter(r => DEFAULT_ROLE_PERMISSIONS[r]?.includes('view:dashboard')).map(role => {
               const vis: DashboardVisibility = { ...DEFAULT_DASHBOARD_VISIBILITY, ...(settings.dashboardVisibility[role] ?? {}) }
               return (
-                <AccordionItem key={role} value={role} className="bg-stone-900 border border-stone-800 rounded-xl px-4">
+                <AccordionItem key={role} value={role} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4">
                   <AccordionTrigger className="text-white font-medium hover:no-underline py-4">{role}</AccordionTrigger>
                   <AccordionContent className="pb-4 space-y-1">
                     {DASHBOARD_WIDGETS.map(({ key, label, description }) => (
@@ -488,13 +488,13 @@ export default function SettingsPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader>
             <CardTitle className="text-white">Notifications</CardTitle>
-            <CardDescription className="text-stone-400">Choose what you get notified about.</CardDescription>
+            <CardDescription className="text-zinc-400">Choose what you get notified about.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-1">
-            <p className="text-stone-500 text-xs uppercase tracking-wider pb-2">Email</p>
+            <p className="text-zinc-500 text-xs uppercase tracking-wider pb-2">Email</p>
             <ToggleRow
               label="New job created"
               description="Get an email when a new job is added to your organization."
@@ -533,10 +533,10 @@ export default function SettingsPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader>
             <CardTitle className="text-white">Subscription</CardTitle>
-            <CardDescription className="text-stone-400">Your current plan and billing.</CardDescription>
+            <CardDescription className="text-zinc-400">Your current plan and billing.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -545,23 +545,23 @@ export default function SettingsPage() {
                 { name: 'Crew',    price: '$59', period: '/mo', features: ['Up to 5 admin/sales users', 'Unlimited jobs', 'Estimates & calculator', 'Time clock'], highlight: true },
                 { name: 'Company', price: '$99', period: '/mo', features: ['Unlimited admin/sales users', 'Unlimited jobs', 'Estimates & calculator', 'Time clock', 'White-label PDF'] },
               ].map(tier => (
-                <div key={tier.name} className={`border rounded-xl p-4 space-y-3 hover:border-emerald-600 transition-colors cursor-pointer ${tier.highlight ? 'border-emerald-600 bg-stone-800' : 'border-stone-700'}`}>
+                <div key={tier.name} className={`border rounded-xl p-4 space-y-3 hover:border-amber-600 transition-colors cursor-pointer ${tier.highlight ? 'border-amber-600 bg-zinc-800' : 'border-zinc-700'}`}>
                   <p className="text-white font-semibold text-lg">{tier.name}</p>
                   <div className="flex items-end gap-1">
-                    <span className="text-emerald-400 font-mono text-4xl font-bold tracking-tight">{tier.price}</span>
-                    <span className="text-stone-400 text-sm mb-1">{tier.period}</span>
+                    <span className="text-amber-400 tabular-nums text-4xl font-bold tracking-tight">{tier.price}</span>
+                    <span className="text-zinc-400 text-sm mb-1">{tier.period}</span>
                   </div>
                   <ul className="space-y-1">
                     {tier.features.map(f => (
-                      <li key={f} className="text-stone-400 text-sm flex items-center gap-2">
-                        <span className="text-emerald-500">✓</span> {f}
+                      <li key={f} className="text-zinc-400 text-sm flex items-center gap-2">
+                        <span className="text-amber-500">✓</span> {f}
                       </li>
                     ))}
                   </ul>
                 </div>
               ))}
             </div>
-            <p className="text-stone-500 text-sm">Payment integration coming soon.</p>
+            <p className="text-zinc-500 text-sm">Payment integration coming soon.</p>
           </CardContent>
         </Card>
       </div>
@@ -574,26 +574,26 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
         <div className="space-y-4">
-          <Card className="bg-stone-900 border-red-900/40 text-white">
+          <Card className="bg-zinc-900 border-red-900/40 text-white">
             <CardHeader>
               <CardTitle className="text-white">Transfer Ownership</CardTitle>
-              <CardDescription className="text-stone-400">Transfer admin ownership to another member of your organization.</CardDescription>
+              <CardDescription className="text-zinc-400">Transfer admin ownership to another member of your organization.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-stone-400 text-sm mb-4">The current owner will be downgraded to Sub-Admin. This action cannot be undone without the new owner's cooperation.</p>
-              <Button variant="outline" disabled className="border-stone-700 text-stone-400 cursor-not-allowed">
+              <p className="text-zinc-400 text-sm mb-4">The current owner will be downgraded to Sub-Admin. This action cannot be undone without the new owner's cooperation.</p>
+              <Button variant="outline" disabled className="border-zinc-700 text-zinc-400 cursor-not-allowed">
                 Coming Soon
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-stone-900 border-red-900/40 text-white">
+          <Card className="bg-zinc-900 border-red-900/40 text-white">
             <CardHeader>
               <CardTitle className="text-red-400">Delete Organization</CardTitle>
-              <CardDescription className="text-stone-400">Permanently delete your organization and all associated data.</CardDescription>
+              <CardDescription className="text-zinc-400">Permanently delete your organization and all associated data.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-stone-400 text-sm mb-4">
+              <p className="text-zinc-400 text-sm mb-4">
                 This will permanently delete all jobs, employees, time entries, and settings. <span className="text-red-400 font-medium">This cannot be undone.</span>
               </p>
               <Button variant="destructive" onClick={() => setDeleteConfirmOpen(true)} className="bg-red-700 hover:bg-red-600">
@@ -604,10 +604,10 @@ export default function SettingsPage() {
         </div>
 
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-          <DialogContent className="bg-stone-900 border-stone-700 text-white">
+          <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
             <DialogHeader>
               <DialogTitle className="text-red-400">Delete Organization</DialogTitle>
-              <DialogDescription className="text-stone-400">
+              <DialogDescription className="text-zinc-400">
                 This action is permanent and cannot be undone. Type <span className="text-white font-mono font-semibold">DELETE</span> to confirm.
               </DialogDescription>
             </DialogHeader>
@@ -616,10 +616,10 @@ export default function SettingsPage() {
                 value={deleteInput}
                 onChange={e => setDeleteInput(e.target.value)}
                 placeholder="Type DELETE to confirm"
-                className="bg-stone-800 border-stone-700 text-white"
+                className="bg-zinc-800 border-zinc-700 text-white"
               />
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => { setDeleteConfirmOpen(false); setDeleteInput('') }} className="border-stone-700 text-stone-300 flex-1">
+                <Button variant="outline" onClick={() => { setDeleteConfirmOpen(false); setDeleteInput('') }} className="border-zinc-700 text-zinc-300 flex-1">
                   Cancel
                 </Button>
                 <Button
@@ -650,9 +650,9 @@ export default function SettingsPage() {
 function Field({ label, hint, children, className }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`space-y-1.5 ${className ?? ''}`}>
-      <Label className="text-stone-300">{label}</Label>
-      {hint && <p className="text-stone-500 text-xs">{hint}</p>}
-      <div className="[&_input]:bg-stone-800 [&_input]:border-stone-700 [&_input]:text-white [&_input]:placeholder:text-stone-500">
+      <Label className="text-zinc-300">{label}</Label>
+      {hint && <p className="text-zinc-500 text-xs">{hint}</p>}
+      <div className="[&_input]:bg-zinc-800 [&_input]:border-zinc-700 [&_input]:text-white [&_input]:placeholder:text-zinc-500">
         {children}
       </div>
     </div>
@@ -666,12 +666,12 @@ function ToggleRow({ label, description, checked, onCheckedChange }: {
   onCheckedChange: (v: boolean) => void
 }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-stone-800 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-zinc-800 last:border-0">
       <div className="pr-4">
         <p className="text-white text-sm font-medium">{label}</p>
-        <p className="text-stone-500 text-xs mt-0.5">{description}</p>
+        <p className="text-zinc-500 text-xs mt-0.5">{description}</p>
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} className="data-[state=checked]:bg-emerald-600 flex-shrink-0" />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} className="data-[state=checked]:bg-amber-600 flex-shrink-0" />
     </div>
   )
 }

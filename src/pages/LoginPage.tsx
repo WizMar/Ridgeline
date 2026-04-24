@@ -81,7 +81,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="text-center flex flex-col items-center gap-3">
@@ -92,21 +92,21 @@ export default function LoginPage() {
             </svg>
             <h1 className="text-4xl font-bold text-white tracking-tight">Ridgeline</h1>
           </div>
-          <p className="text-stone-400 text-sm">Built for the Trades</p>
+          <p className="text-zinc-400 text-sm">Built for the Trades</p>
         </div>
 
-        <Card className="bg-stone-900 border-stone-800">
+        <Card className="bg-zinc-900 border-zinc-800">
           {/* LOGIN */}
           {mode === 'login' && (
             <>
               <CardHeader>
                 <CardTitle className="text-white">Sign In</CardTitle>
-                <CardDescription className="text-stone-400">Welcome back</CardDescription>
+                <CardDescription className="text-zinc-400">Welcome back</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-stone-300">Email</Label>
+                    <Label htmlFor="email" className="text-zinc-300">Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -114,11 +114,11 @@ export default function LoginPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-stone-300">Password</Label>
+                    <Label htmlFor="password" className="text-zinc-300">Password</Label>
                     <Input
                       id="password"
                       type="password"
@@ -126,23 +126,23 @@ export default function LoginPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-amber-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
+                  <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white" disabled={loading}>
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
 
                   <Button
                     variant="link"
-                    className="w-full text-stone-400 hover:text-white"
+                    className="w-full text-zinc-400 hover:text-white"
                     type="button"
                     onClick={() => { setMode('forgot-password'); setMessage(null) }}
                   >
@@ -150,11 +150,11 @@ export default function LoginPage() {
                   </Button>
                 </form>
 
-                <div className="mt-4 pt-4 border-t border-stone-800 text-center text-sm text-stone-500">
+                <div className="mt-4 pt-4 border-t border-zinc-800 text-center text-sm text-zinc-500">
                   Starting a new company on Ridgeline?{' '}
                   <button
                     onClick={() => { setMode('create-org'); setMessage(null) }}
-                    className="text-emerald-500 hover:text-emerald-400 font-medium"
+                    className="text-amber-500 hover:text-amber-400 font-medium"
                   >
                     Create your organization
                   </button>
@@ -168,14 +168,14 @@ export default function LoginPage() {
             <>
               <CardHeader>
                 <CardTitle className="text-white">Create Your Organization</CardTitle>
-                <CardDescription className="text-stone-400">
+                <CardDescription className="text-zinc-400">
                   You'll be the Admin. Invite your team from the app.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleCreateOrg} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="orgName" className="text-stone-300">Company Name</Label>
+                    <Label htmlFor="orgName" className="text-zinc-300">Company Name</Label>
                     <Input
                       id="orgName"
                       type="text"
@@ -183,11 +183,11 @@ export default function LoginPage() {
                       value={orgName}
                       onChange={e => setOrgName(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-stone-300">Your Name</Label>
+                    <Label htmlFor="fullName" className="text-zinc-300">Your Name</Label>
                     <Input
                       id="fullName"
                       type="text"
@@ -195,11 +195,11 @@ export default function LoginPage() {
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email2" className="text-stone-300">Email</Label>
+                    <Label htmlFor="email2" className="text-zinc-300">Email</Label>
                     <Input
                       id="email2"
                       type="email"
@@ -207,11 +207,11 @@ export default function LoginPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password2" className="text-stone-300">Password</Label>
+                    <Label htmlFor="password2" className="text-zinc-300">Password</Label>
                     <Input
                       id="password2"
                       type="password"
@@ -220,26 +220,26 @@ export default function LoginPage() {
                       onChange={e => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-amber-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
+                  <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white" disabled={loading}>
                     {loading ? 'Creating...' : 'Create Organization'}
                   </Button>
                 </form>
 
-                <div className="mt-4 text-center text-sm text-stone-400">
+                <div className="mt-4 text-center text-sm text-zinc-400">
                   Already have an account?{' '}
                   <button
                     onClick={() => { setMode('login'); setMessage(null) }}
-                    className="text-emerald-500 hover:text-emerald-400 font-medium"
+                    className="text-amber-500 hover:text-amber-400 font-medium"
                   >
                     Sign In
                   </button>
@@ -253,14 +253,14 @@ export default function LoginPage() {
             <>
               <CardHeader>
                 <CardTitle className="text-white">Reset Password</CardTitle>
-                <CardDescription className="text-stone-400">
+                <CardDescription className="text-zinc-400">
                   Enter your email and we'll send you a reset link.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reset-email" className="text-stone-300">Email</Label>
+                    <Label htmlFor="reset-email" className="text-zinc-300">Email</Label>
                     <Input
                       id="reset-email"
                       type="email"
@@ -268,25 +268,25 @@ export default function LoginPage() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-amber-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
+                  <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white" disabled={loading}>
                     {loading ? 'Sending...' : 'Send Reset Link'}
                   </Button>
                 </form>
 
-                <div className="mt-4 text-center text-sm text-stone-400">
+                <div className="mt-4 text-center text-sm text-zinc-400">
                   <button
                     onClick={() => { setMode('login'); setMessage(null) }}
-                    className="text-emerald-500 hover:text-emerald-400 font-medium"
+                    className="text-amber-500 hover:text-amber-400 font-medium"
                   >
                     Back to Sign In
                   </button>

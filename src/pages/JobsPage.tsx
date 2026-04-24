@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useJobs } from '@/context/JobsContext'
 import { useEmployees } from '@/context/EmployeeContext'
+import { usePreferences, formatDate } from '@/context/PreferencesContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,8 @@ import {
   type Job, type JobStatus, type JobType,
   JOB_STATUSES, JOB_TYPES, STATUS_BADGE, STATUS_BORDER,
 } from '@/types/job'
+import { toast } from 'sonner'
+import { Briefcase } from 'lucide-react'
 
 function newJob(): Job {
   return {
@@ -42,6 +45,7 @@ function streetViewUrl(address: string) {
 export default function JobsPage() {
   const { jobs, addJob, updateJob, deleteJob } = useJobs()
   const { employees } = useEmployees()
+  const { prefs } = usePreferences()
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<JobStatus | 'All'>('All')
@@ -88,8 +92,10 @@ export default function JobsPage() {
     if (isEditing) {
       updateJob(updated)
       setSelected(updated)
+      toast.success('Job updated')
     } else {
       addJob(updated)
+      toast.success('Job created')
     }
     setDialogOpen(false)
   }
@@ -98,6 +104,7 @@ export default function JobsPage() {
     deleteJob(id)
     setConfirmDelete(null)
     setDetailOpen(false)
+    toast.success('Job deleted')
   }
 
   function toggleCrew(empId: string) {
@@ -123,9 +130,9 @@ export default function JobsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Jobs</h2>
-          <p className="text-stone-400 text-sm mt-1">Manage your active and upcoming jobs.</p>
+          <p className="text-zinc-400 text-sm mt-1">Manage your active and upcoming jobs.</p>
         </div>
-        <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+        <Button onClick={openCreate} className="bg-amber-600 hover:bg-amber-500 text-white">
           + New Job
         </Button>
       </div>
@@ -138,8 +145,8 @@ export default function JobsPage() {
             onClick={() => setFilterStatus(s)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
               filterStatus === s
-                ? 'bg-emerald-600 border-emerald-600 text-white'
-                : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-300'
+                ? 'bg-amber-600 border-amber-600 text-white'
+                : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
             }`}
           >
             {s} {s !== 'All' && statusCounts[s] > 0 && `(${statusCounts[s]})`}
@@ -152,16 +159,22 @@ export default function JobsPage() {
         placeholder="Search by job title, client, or address..."
         value={search}
         onChange={e => setSearch(e.target.value)}
-        className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500 max-w-md"
+        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 max-w-md"
       />
 
       {/* Job List */}
       {filtered.length === 0 ? (
-        <Card className="bg-stone-900 border-stone-800">
-          <CardContent className="py-16 text-center text-stone-500">
-            {jobs.length === 0
-              ? 'No jobs yet. Create your first job to get started.'
-              : 'No jobs match your search.'}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="py-16 flex flex-col items-center gap-3 text-center">
+            <Briefcase className="w-10 h-10 text-zinc-600" strokeWidth={1.5} />
+            <p className="text-zinc-500 text-sm">
+              {jobs.length === 0 ? 'No jobs yet.' : 'No jobs match your search.'}
+            </p>
+            {jobs.length === 0 && (
+              <Button onClick={openCreate} className="bg-amber-600 hover:bg-amber-500 text-white mt-1">
+                + Create First Job
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -170,7 +183,7 @@ export default function JobsPage() {
             <div
               key={job.id}
               onClick={() => openDetail(job)}
-              className={`bg-stone-900 border border-stone-800 border-l-4 ${STATUS_BORDER[job.status]} rounded-lg overflow-hidden cursor-pointer hover:border-stone-600 hover:bg-stone-800/60 transition-colors`}
+              className={`bg-zinc-900 border border-zinc-800 border-l-4 ${STATUS_BORDER[job.status]} rounded-lg overflow-hidden cursor-pointer hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors`}
             >
               {job.address && (
                 <iframe
@@ -186,16 +199,18 @@ export default function JobsPage() {
                   {job.status}
                 </span>
               </div>
-              <p className="text-stone-300 text-sm">{job.client.name}</p>
-              <p className="text-stone-500 text-xs mt-1 line-clamp-1">{job.address || 'No address'}</p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-800">
-                <span className="text-stone-500 text-xs">{job.type}</span>
-                {job.leadId && (
-                  <span className="text-stone-400 text-xs">Lead: {empName(job.leadId).split(' ')[0]}</span>
-                )}
-                {job.scheduledDate && (
-                  <span className="text-stone-400 text-xs">{job.scheduledDate}</span>
-                )}
+              <p className="text-zinc-300 text-sm">{job.client.name}</p>
+              <p className="text-zinc-500 text-xs mt-1 line-clamp-1">{job.address || 'No address'}</p>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
+                <span className="text-zinc-500 text-xs">{job.type}</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  {job.leadId && (
+                    <span className="text-zinc-400 text-xs">Lead: {empName(job.leadId).split(' ')[0]}</span>
+                  )}
+                  {job.scheduledDate && (
+                    <span className="text-zinc-400 text-xs">{formatDate(job.scheduledDate, prefs.dateFormat)}</span>
+                  )}
+                </div>
               </div>
               </div>
             </div>
@@ -205,7 +220,7 @@ export default function JobsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           {selected && (
             <>
               <DialogHeader>
@@ -222,7 +237,7 @@ export default function JobsPage() {
               <div className="space-y-4 mt-2">
                 {/* Property Map */}
                 {selected.address && (
-                  <div className="rounded-lg overflow-hidden border border-stone-700">
+                  <div className="rounded-lg overflow-hidden border border-zinc-700">
                     <iframe
                       src={`https://maps.google.com/maps?q=${encodeURIComponent(selected.address)}&layer=c&output=embed`}
                       className="w-full border-0"
@@ -233,7 +248,7 @@ export default function JobsPage() {
                       href={streetViewUrl(selected.address)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 text-xs text-emerald-400 hover:text-emerald-300 bg-stone-800 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-amber-400 hover:text-amber-300 bg-zinc-800 transition-colors"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -244,29 +259,29 @@ export default function JobsPage() {
                 )}
 
                 {/* Client Info */}
-                <div className="bg-stone-800 rounded-lg p-3 space-y-1">
-                  <p className="text-stone-400 text-xs font-medium uppercase tracking-wide mb-2">Client</p>
+                <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+                  <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-2">Client</p>
                   <p className="text-white font-medium">{selected.client.name}</p>
-                  {selected.client.phone && <p className="text-stone-300 text-sm">{selected.client.phone}</p>}
-                  {selected.client.email && <p className="text-stone-400 text-sm">{selected.client.email}</p>}
+                  {selected.client.phone && <p className="text-zinc-300 text-sm">{selected.client.phone}</p>}
+                  {selected.client.email && <p className="text-zinc-400 text-sm">{selected.client.email}</p>}
                 </div>
 
                 {/* Job Details */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Type</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Type</p>
                     <p className="text-white text-sm">{selected.type}</p>
                   </div>
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Scheduled</p>
-                    <p className="text-white text-sm">{selected.scheduledDate || '—'}</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Scheduled</p>
+                    <p className="text-white text-sm">{selected.scheduledDate ? formatDate(selected.scheduledDate, prefs.dateFormat) : '—'}</p>
                   </div>
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Lead</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Lead</p>
                     <p className="text-white text-sm">{empName(selected.leadId)}</p>
                   </div>
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Crew</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Crew</p>
                     <p className="text-white text-sm">
                       {selected.crewIds.length === 0
                         ? '—'
@@ -277,17 +292,17 @@ export default function JobsPage() {
 
                 {/* Scope */}
                 {selected.scope && (
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Scope of Work</p>
-                    <p className="text-stone-200 text-sm whitespace-pre-wrap">{selected.scope}</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Scope of Work</p>
+                    <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.scope}</p>
                   </div>
                 )}
 
                 {/* Notes */}
                 {selected.notes && (
-                  <div className="bg-stone-800 rounded-lg p-3">
-                    <p className="text-stone-400 text-xs mb-1">Notes</p>
-                    <p className="text-stone-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
+                  <div className="bg-zinc-800 rounded-lg p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Notes</p>
+                    <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
                   </div>
                 )}
               </div>
@@ -301,7 +316,7 @@ export default function JobsPage() {
                   Delete
                 </Button>
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                  className="bg-amber-600 hover:bg-amber-500 text-white"
                   onClick={() => openEdit(selected)}
                 >
                   Edit Job
@@ -314,7 +329,7 @@ export default function JobsPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">{isEditing ? 'Edit Job' : 'New Job'}</DialogTitle>
           </DialogHeader>
@@ -322,24 +337,24 @@ export default function JobsPage() {
           <div className="space-y-5 mt-2">
             {/* Title */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Job Title *</Label>
+              <Label className="text-zinc-300">Job Title *</Label>
               <Input
                 value={draft.title}
                 onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
                 placeholder="e.g. Smith Residence - Roof Replacement"
-                className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>
 
             {/* Status + Type */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-stone-300">Status</Label>
+                <Label className="text-zinc-300">Status</Label>
                 <Select value={draft.status} onValueChange={v => setDraft(d => ({ ...d, status: v as JobStatus }))}>
-                  <SelectTrigger className="bg-stone-800 border-stone-700 text-white">
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                     {JOB_STATUSES.map(s => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
@@ -347,12 +362,12 @@ export default function JobsPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-stone-300">Job Type</Label>
+                <Label className="text-zinc-300">Job Type</Label>
                 <Select value={draft.type} onValueChange={v => setDraft(d => ({ ...d, type: v as JobType }))}>
-                  <SelectTrigger className="bg-stone-800 border-stone-700 text-white">
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                     {JOB_TYPES.map(t => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
                     ))}
@@ -363,44 +378,44 @@ export default function JobsPage() {
 
             {/* Scheduled Date */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Scheduled Date</Label>
+              <Label className="text-zinc-300">Scheduled Date</Label>
               <Input
                 type="date"
                 value={draft.scheduledDate}
                 onChange={e => setDraft(d => ({ ...d, scheduledDate: e.target.value }))}
-                className="bg-stone-800 border-stone-700 text-white"
+                className="bg-zinc-800 border-zinc-700 text-white"
               />
             </div>
 
             {/* Client Info */}
             <div>
-              <p className="text-stone-400 text-xs font-medium uppercase tracking-wide mb-3">Client Information</p>
+              <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-3">Client Information</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-stone-300">Client Name *</Label>
+                  <Label className="text-zinc-300">Client Name *</Label>
                   <Input
                     value={draft.client.name}
                     onChange={e => setDraft(d => ({ ...d, client: { ...d.client, name: e.target.value } }))}
                     placeholder="John Smith"
-                    className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-stone-300">Phone</Label>
+                  <Label className="text-zinc-300">Phone</Label>
                   <Input
                     value={draft.client.phone}
                     onChange={e => setDraft(d => ({ ...d, client: { ...d.client, phone: e.target.value } }))}
                     placeholder="(555) 000-0000"
-                    className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-stone-300">Email</Label>
+                  <Label className="text-zinc-300">Email</Label>
                   <Input
                     value={draft.client.email}
                     onChange={e => setDraft(d => ({ ...d, client: { ...d.client, email: e.target.value } }))}
                     placeholder="client@email.com"
-                    className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                   />
                 </div>
               </div>
@@ -408,26 +423,26 @@ export default function JobsPage() {
 
             {/* Address */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Property Address</Label>
+              <Label className="text-zinc-300">Property Address</Label>
               <Input
                 value={draft.address}
                 onChange={e => setDraft(d => ({ ...d, address: e.target.value }))}
                 placeholder="123 Main St, City, CA 00000"
-                className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>
 
             {/* Lead */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Assign Lead</Label>
+              <Label className="text-zinc-300">Assign Lead</Label>
               <Select
                 value={draft.leadId ?? 'none'}
                 onValueChange={v => setDraft(d => ({ ...d, leadId: v === 'none' ? null : v }))}
               >
-                <SelectTrigger className="bg-stone-800 border-stone-700 text-white">
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectValue placeholder="No lead assigned" />
                 </SelectTrigger>
-                <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectItem value="none">No lead assigned</SelectItem>
                   {leads.map(e => (
                     <SelectItem key={e.id} value={e.id}>{e.name} ({e.role})</SelectItem>
@@ -439,7 +454,7 @@ export default function JobsPage() {
             {/* Crew */}
             {crew.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-stone-300">Assign Crew</Label>
+                <Label className="text-zinc-300">Assign Crew</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {crew.map(e => (
                     <button
@@ -448,8 +463,8 @@ export default function JobsPage() {
                       onClick={() => toggleCrew(e.id)}
                       className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
                         draft.crewIds.includes(e.id)
-                          ? 'border-emerald-600 bg-emerald-900/30 text-emerald-300'
-                          : 'border-stone-700 text-stone-400 hover:border-stone-500'
+                          ? 'border-amber-600 bg-amber-900/30 text-amber-300'
+                          : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
                       }`}
                     >
                       {e.name.split(' ')[0]}
@@ -461,36 +476,36 @@ export default function JobsPage() {
 
             {/* Scope of Work */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Scope of Work</Label>
+              <Label className="text-zinc-300">Scope of Work</Label>
               <textarea
                 value={draft.scope}
                 onChange={e => setDraft(d => ({ ...d, scope: e.target.value }))}
                 rows={3}
                 placeholder="Describe the work to be performed..."
-                className="w-full rounded-md bg-stone-800 border border-stone-700 text-white placeholder:text-stone-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-600"
               />
             </div>
 
             {/* Notes */}
             <div className="space-y-1.5">
-              <Label className="text-stone-300">Internal Notes</Label>
+              <Label className="text-zinc-300">Internal Notes</Label>
               <textarea
                 value={draft.notes}
                 onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
                 rows={2}
                 placeholder="Internal notes (not visible to client)..."
-                className="w-full rounded-md bg-stone-800 border border-stone-700 text-white placeholder:text-stone-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-600"
               />
             </div>
 
           </div>
 
           <DialogFooter className="mt-6">
-            <Button variant="ghost" className="text-stone-400 hover:text-white" onClick={() => setDialogOpen(false)}>
+            <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              className="bg-amber-600 hover:bg-amber-500 text-white"
               onClick={handleSave}
               disabled={!draft.title.trim() || !draft.client.name.trim()}
             >
@@ -502,13 +517,13 @@ export default function JobsPage() {
 
       {/* Delete Confirm */}
       <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-sm">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">Delete Job?</DialogTitle>
           </DialogHeader>
-          <p className="text-stone-400 text-sm">This action cannot be undone.</p>
+          <p className="text-zinc-400 text-sm">This action cannot be undone.</p>
           <DialogFooter className="mt-4">
-            <Button variant="ghost" className="text-stone-400" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+            <Button variant="ghost" className="text-zinc-400" onClick={() => setConfirmDelete(null)}>Cancel</Button>
             <Button className="bg-red-700 hover:bg-red-600 text-white" onClick={() => handleDelete(confirmDelete!)}>
               Delete
             </Button>

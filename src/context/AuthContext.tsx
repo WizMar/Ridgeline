@@ -38,7 +38,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
   Lead: [
     'view:dashboard',
     'view:timeclock',
-    'manage:timeclock',
     'view:jobs:assigned',
     'view:jobs:all',
   ],

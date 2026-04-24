@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { EmployeeProvider } from './context/EmployeeContext'
 import { TimeClockProvider } from './context/TimeClockContext'
@@ -23,8 +24,8 @@ function AppRoutes() {
   const { session, loading, can } = useAuth()
 
   if (loading) return (
-    <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-      <p className="text-stone-400">Loading...</p>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <p className="text-zinc-400">Loading...</p>
     </div>
   )
 
@@ -74,6 +75,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <AppRoutes />
+        <Toaster theme="dark" position="bottom-right" richColors />
       </BrowserRouter>
     </AuthProvider>
   )

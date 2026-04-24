@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
@@ -54,21 +54,21 @@ export default function ResetPasswordPage() {
             </svg>
             <h1 className="text-4xl font-bold text-white tracking-tight">Ridgeline</h1>
           </div>
-          <p className="text-stone-400 text-sm">Built for the Trades</p>
+          <p className="text-zinc-400 text-sm">Built for the Trades</p>
         </div>
 
-        <Card className="bg-stone-900 border-stone-800">
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white">Set New Password</CardTitle>
-            <CardDescription className="text-stone-400">Enter a new password for your account.</CardDescription>
+            <CardDescription className="text-zinc-400">Enter a new password for your account.</CardDescription>
           </CardHeader>
           <CardContent>
             {!ready ? (
-              <p className="text-stone-400 text-sm text-center">Verifying reset link...</p>
+              <p className="text-zinc-400 text-sm text-center">Verifying reset link...</p>
             ) : (
               <form onSubmit={handleReset} className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-stone-300">New Password</Label>
+                  <Label className="text-zinc-300">New Password</Label>
                   <Input
                     type="password"
                     placeholder="••••••••"
@@ -76,11 +76,11 @@ export default function ResetPasswordPage() {
                     onChange={e => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-stone-300">Confirm Password</Label>
+                  <Label className="text-zinc-300">Confirm Password</Label>
                   <Input
                     type="password"
                     placeholder="••••••••"
@@ -88,17 +88,17 @@ export default function ResetPasswordPage() {
                     onChange={e => setConfirm(e.target.value)}
                     required
                     minLength={6}
-                    className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                   />
                 </div>
 
                 {message && (
-                  <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                  <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-amber-400'}`}>
                     {message.text}
                   </p>
                 )}
 
-                <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
+                <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white" disabled={loading}>
                   {loading ? 'Updating...' : 'Update Password'}
                 </Button>
               </form>

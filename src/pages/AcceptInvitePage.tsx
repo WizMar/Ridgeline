@@ -146,7 +146,7 @@ export default function AcceptInvitePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="text-center flex flex-col items-center gap-3">
@@ -157,20 +157,20 @@ export default function AcceptInvitePage() {
             </svg>
             <h1 className="text-4xl font-bold text-white tracking-tight">Ridgeline</h1>
           </div>
-          <p className="text-stone-400 text-sm">Built for the Trades</p>
+          <p className="text-zinc-400 text-sm">Built for the Trades</p>
         </div>
 
-        <Card className="bg-stone-900 border-stone-800">
+        <Card className="bg-zinc-900 border-zinc-800">
           {inviteStatus === 'loading' && (
             <CardContent className="pt-6">
-              <p className="text-stone-400 text-center">Verifying your invitation...</p>
+              <p className="text-zinc-400 text-center">Verifying your invitation...</p>
             </CardContent>
           )}
 
           {inviteStatus === 'invalid' && (
             <CardContent className="pt-6 text-center space-y-3">
               <p className="text-red-400">This invitation link is invalid.</p>
-              <button onClick={() => navigate('/login')} className="text-emerald-500 hover:text-emerald-400 text-sm">
+              <button onClick={() => navigate('/login')} className="text-amber-500 hover:text-amber-400 text-sm">
                 Back to Sign In
               </button>
             </CardContent>
@@ -179,7 +179,7 @@ export default function AcceptInvitePage() {
           {inviteStatus === 'expired' && (
             <CardContent className="pt-6 text-center space-y-3">
               <p className="text-red-400">This invitation has expired. Ask your admin to send a new one.</p>
-              <button onClick={() => navigate('/login')} className="text-emerald-500 hover:text-emerald-400 text-sm">
+              <button onClick={() => navigate('/login')} className="text-amber-500 hover:text-amber-400 text-sm">
                 Back to Sign In
               </button>
             </CardContent>
@@ -187,8 +187,8 @@ export default function AcceptInvitePage() {
 
           {inviteStatus === 'accepted' && (
             <CardContent className="pt-6 text-center space-y-3">
-              <p className="text-stone-400">This invitation has already been used.</p>
-              <button onClick={() => navigate('/login')} className="text-emerald-500 hover:text-emerald-400 text-sm">
+              <p className="text-zinc-400">This invitation has already been used.</p>
+              <button onClick={() => navigate('/login')} className="text-amber-500 hover:text-amber-400 text-sm">
                 Sign In
               </button>
             </CardContent>
@@ -198,24 +198,24 @@ export default function AcceptInvitePage() {
             <>
               <CardHeader>
                 <CardTitle className="text-white">You're invited!</CardTitle>
-                <CardDescription className="text-stone-400">
+                <CardDescription className="text-zinc-400">
                   Join <span className="text-white font-medium">{invitation.organizations?.name ?? 'your team'}</span> as{' '}
-                  <span className="text-emerald-400 font-medium">{invitation.role}</span>
+                  <span className="text-amber-400 font-medium">{invitation.role}</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAccept} className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-stone-300">Email</Label>
+                    <Label className="text-zinc-300">Email</Label>
                     <Input
                       type="email"
                       value={invitation.email}
                       disabled
-                      className="bg-stone-800 border-stone-700 text-stone-400"
+                      className="bg-zinc-800 border-zinc-700 text-zinc-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-stone-300">Your Name</Label>
+                    <Label htmlFor="fullName" className="text-zinc-300">Your Name</Label>
                     <Input
                       id="fullName"
                       type="text"
@@ -223,11 +223,11 @@ export default function AcceptInvitePage() {
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                       required
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-stone-300">Set Password</Label>
+                    <Label htmlFor="password" className="text-zinc-300">Set Password</Label>
                     <Input
                       id="password"
                       type="password"
@@ -236,17 +236,17 @@ export default function AcceptInvitePage() {
                       onChange={e => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="bg-stone-800 border-stone-700 text-white placeholder:text-stone-500"
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-amber-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
+                  <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white" disabled={loading}>
                     {loading ? 'Creating account...' : 'Accept Invitation'}
                   </Button>
                 </form>

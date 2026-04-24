@@ -30,25 +30,25 @@ export const JOB_STATUSES: JobStatus[] = [
 ]
 
 export const STATUS_COLORS: Record<JobStatus, string> = {
-  Draft: '#6b7280',
-  Scheduled: '#2980b9',
-  'In Progress': '#e67e22',
-  Completed: '#27ae60',
-  Invoiced: '#8e44ad',
+  Draft: '#52525b',
+  Scheduled: '#60a5fa',
+  'In Progress': '#f59e0b',
+  Completed: '#4ade80',
+  Invoiced: '#a78bfa',
 }
 
 export const STATUS_BADGE: Record<JobStatus, string> = {
-  Draft: 'bg-stone-700 text-stone-300',
+  Draft: 'bg-zinc-700 text-zinc-300',
   Scheduled: 'bg-blue-900/60 text-blue-300',
-  'In Progress': 'bg-orange-900/60 text-orange-300',
-  Completed: 'bg-emerald-900/60 text-emerald-300',
-  Invoiced: 'bg-purple-900/60 text-purple-300',
+  'In Progress': 'bg-amber-900/60 text-amber-300',
+  Completed: 'bg-green-900/60 text-green-300',
+  Invoiced: 'bg-violet-900/60 text-violet-300',
 }
 
 export const STATUS_BORDER: Record<JobStatus, string> = {
-  Draft: 'border-l-stone-500',
+  Draft: 'border-l-zinc-500',
   Scheduled: 'border-l-blue-500',
   'In Progress': 'border-l-orange-500',
-  Completed: 'border-l-emerald-500',
+  Completed: 'border-l-amber-500',
   Invoiced: 'border-l-purple-500',
 }

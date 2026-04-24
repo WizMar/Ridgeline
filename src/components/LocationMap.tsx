@@ -45,7 +45,7 @@ export default function LocationMap(props: Props) {
   const center: [number, number] = [markers[0].lat, markers[0].lng]
 
   return (
-    <div className="rounded-lg overflow-hidden border border-stone-700" style={{ height }}>
+    <div className="rounded-lg overflow-hidden border border-zinc-700" style={{ height }}>
       <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -137,9 +137,9 @@ export type Estimate = {
 export const ESTIMATE_STATUSES: EstimateStatus[] = ['Draft', 'Submitted', 'Approved', 'Sent', 'Declined']
 
 export const STATUS_BADGE: Record<EstimateStatus, string> = {
-  Draft: 'bg-stone-700 text-stone-300',
+  Draft: 'bg-zinc-700 text-zinc-300',
   Submitted: 'bg-yellow-900/60 text-yellow-300',
-  Approved: 'bg-emerald-900/60 text-emerald-300',
+  Approved: 'bg-amber-900/60 text-amber-300',
   Sent: 'bg-blue-900/60 text-blue-300',
   Declined: 'bg-red-900/60 text-red-300',
 }

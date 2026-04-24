@@ -110,17 +110,17 @@ function newEstimate(num: string, defaults: PricingDefaults): Estimate {
 
 
 const STATUS_BORDER: Record<EstimateStatus, string> = {
-  Draft: 'border-l-stone-500',
+  Draft: 'border-l-zinc-500',
   Submitted: 'border-l-yellow-500',
   Sent: 'border-l-blue-500',
-  Approved: 'border-l-emerald-500',
+  Approved: 'border-l-amber-500',
   Declined: 'border-l-red-500',
 }
 
-const inputCls = 'bg-stone-900 border-stone-700 text-white placeholder:text-stone-500'
-const readOnlyCls = 'bg-stone-900/50 border border-stone-700 rounded-md px-3 py-2 text-stone-300 text-sm min-h-[38px] flex items-center'
-const sectionCls = 'bg-stone-800 rounded-lg p-4 space-y-3'
-const sectionLabelCls = 'text-stone-400 text-xs font-medium uppercase tracking-widest'
+const inputCls = 'bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500'
+const readOnlyCls = 'bg-zinc-900/50 border border-zinc-700 rounded-md px-3 py-2 text-zinc-300 text-sm min-h-[38px] flex items-center'
+const sectionCls = 'bg-zinc-800 rounded-lg p-4 space-y-3'
+const sectionLabelCls = 'text-zinc-400 text-xs font-medium uppercase tracking-widest'
 
 function BtnGroup<T extends string>({
   options, value, onChange, className,
@@ -134,8 +134,8 @@ function BtnGroup<T extends string>({
           onClick={() => onChange(o)}
           className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
             value === o
-              ? 'bg-emerald-600 border-emerald-600 text-white'
-              : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-300 bg-stone-900/30'
+              ? 'bg-amber-600 border-amber-600 text-white'
+              : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300 bg-zinc-900/30'
           }`}
         >
           {o}
@@ -301,10 +301,10 @@ export default function EstimatesPage() {
             className={`rounded-lg p-3 cursor-pointer transition-all ${
               method === 'sellPrice'
                 ? 'border-2 border-orange-500 bg-orange-900/20'
-                : 'border border-stone-700 bg-stone-900/30 opacity-60'
+                : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
             }`}
           >
-            <p className="text-stone-300 text-xs font-medium uppercase tracking-wide mb-2">{sellLabel}</p>
+            <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">{sellLabel}</p>
             <Input
               type="number"
               value={sellValue}
@@ -319,11 +319,11 @@ export default function EstimatesPage() {
             onClick={() => onMethod('markup')}
             className={`rounded-lg p-3 cursor-pointer transition-all ${
               method === 'markup'
-                ? 'border-2 border-emerald-500 bg-emerald-900/20'
-                : 'border border-stone-700 bg-stone-900/30 opacity-60'
+                ? 'border-2 border-amber-500 bg-amber-900/20'
+                : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
             }`}
           >
-            <p className="text-stone-300 text-xs font-medium uppercase tracking-wide mb-2">Markup on Cost</p>
+            <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">Markup on Cost</p>
             <Input
               type="number"
               value={markup}
@@ -333,7 +333,7 @@ export default function EstimatesPage() {
               onClick={e => e.stopPropagation()}
             />
             {method === 'markup' && mPct > 0 && subtotal > 0 && (
-              <p className="text-stone-500 text-xs mt-1">— {grossMargin.toFixed(1)}% gross margin</p>
+              <p className="text-zinc-500 text-xs mt-1">— {grossMargin.toFixed(1)}% gross margin</p>
             )}
           </div>
         </div>
@@ -347,9 +347,9 @@ export default function EstimatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Estimates</h2>
-          <p className="text-stone-400 text-sm mt-1">Create and manage customer estimates.</p>
+          <p className="text-zinc-400 text-sm mt-1">Create and manage customer estimates.</p>
         </div>
-        <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+        <Button onClick={openCreate} className="bg-amber-600 hover:bg-amber-500 text-white">
           + New Estimate
         </Button>
       </div>
@@ -362,8 +362,8 @@ export default function EstimatesPage() {
             onClick={() => setFilterStatus(s)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
               filterStatus === s
-                ? 'bg-emerald-600 border-emerald-600 text-white'
-                : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-300'
+                ? 'bg-amber-600 border-amber-600 text-white'
+                : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
             }`}
           >
             {s} {s !== 'All' && statusCounts[s] > 0 && `(${statusCounts[s]})`}
@@ -381,8 +381,8 @@ export default function EstimatesPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <Card className="bg-stone-900 border-stone-800">
-          <CardContent className="py-16 text-center text-stone-500">
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="py-16 text-center text-zinc-500">
             {estimates.length === 0
               ? 'No estimates yet. Create your first estimate to get started.'
               : 'No estimates match your search.'}
@@ -396,7 +396,7 @@ export default function EstimatesPage() {
               <div
                 key={est.id}
                 onClick={() => openDetail(est)}
-                className={`bg-stone-900 border border-stone-800 border-l-4 ${STATUS_BORDER[est.status]} rounded-lg p-4 cursor-pointer hover:border-stone-600 hover:bg-stone-800/60 transition-colors`}
+                className={`bg-zinc-900 border border-zinc-800 border-l-4 ${STATUS_BORDER[est.status]} rounded-lg p-4 cursor-pointer hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <p className="font-semibold text-white leading-tight">{est.estimateNumber}</p>
@@ -404,11 +404,11 @@ export default function EstimatesPage() {
                     {est.status}
                   </span>
                 </div>
-                <p className="text-stone-300 text-sm">{est.client.name || '—'}</p>
-                <p className="text-stone-500 text-xs mt-1 line-clamp-1">{est.address || 'No address'}</p>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-800">
-                  <span className="text-stone-500 text-xs">{est.jobType}</span>
-                  <span className="text-emerald-400 text-sm font-semibold">{fmt(total)}</span>
+                <p className="text-zinc-300 text-sm">{est.client.name || '—'}</p>
+                <p className="text-zinc-500 text-xs mt-1 line-clamp-1">{est.address || 'No address'}</p>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
+                  <span className="text-zinc-500 text-xs">{est.jobType}</span>
+                  <span className="text-amber-400 text-sm font-semibold">{fmt(total)}</span>
                 </div>
                 {est.convertedJobId && (
                   <p className="text-teal-400 text-xs mt-2">Converted to Job</p>
@@ -421,7 +421,7 @@ export default function EstimatesPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           {selected && (() => {
             const { breakdown, subtotal, markup, markupPct, total } = calcEstimateTotal(selected)
             return (
@@ -434,62 +434,62 @@ export default function EstimatesPage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[selected.status]}`}>
                           {selected.status}
                         </span>
-                        <span className="text-stone-500 text-xs">{selected.jobType}</span>
+                        <span className="text-zinc-500 text-xs">{selected.jobType}</span>
                       </div>
                     </div>
-                    <span className="text-emerald-400 text-2xl font-bold">{fmt(total)}</span>
+                    <span className="text-amber-400 text-2xl font-bold">{fmt(total)}</span>
                   </div>
                 </DialogHeader>
 
                 <div className="space-y-4 mt-2">
                   {/* Client */}
-                  <div className="bg-stone-800 rounded-lg p-3 space-y-1">
-                    <p className="text-stone-400 text-xs font-medium uppercase tracking-wide mb-2">Client</p>
+                  <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
+                    <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-2">Client</p>
                     <p className="text-white font-medium">{selected.client.name}</p>
-                    {selected.client.phone && <p className="text-stone-300 text-sm">{selected.client.phone}</p>}
-                    {selected.client.email && <p className="text-stone-400 text-sm">{selected.client.email}</p>}
-                    {selected.address && <p className="text-stone-400 text-sm mt-1">{selected.address}</p>}
+                    {selected.client.phone && <p className="text-zinc-300 text-sm">{selected.client.phone}</p>}
+                    {selected.client.email && <p className="text-zinc-400 text-sm">{selected.client.email}</p>}
+                    {selected.address && <p className="text-zinc-400 text-sm mt-1">{selected.address}</p>}
                   </div>
 
                   {/* Cost Breakdown */}
                   {breakdown.length > 0 && (
-                    <div className="bg-stone-800 rounded-lg p-3">
-                      <p className="text-stone-400 text-xs font-medium uppercase tracking-wide mb-3">Cost Breakdown</p>
+                    <div className="bg-zinc-800 rounded-lg p-3">
+                      <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-3">Cost Breakdown</p>
                       <div className="space-y-1.5 text-sm">
                         {breakdown.map((item, i) => (
                           <div key={i} className="flex justify-between">
-                            <span className="text-stone-400">{item.label}</span>
+                            <span className="text-zinc-400">{item.label}</span>
                             <span className="text-white">{fmt(item.amount)}</span>
                           </div>
                         ))}
-                        <div className="flex justify-between pt-2 border-t border-stone-700">
-                          <span className="text-stone-400">Subtotal</span>
+                        <div className="flex justify-between pt-2 border-t border-zinc-700">
+                          <span className="text-zinc-400">Subtotal</span>
                           <span className="text-white">{fmt(subtotal)}</span>
                         </div>
                         {markup > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-stone-400">Markup ({markupPct}%)</span>
+                            <span className="text-zinc-400">Markup ({markupPct}%)</span>
                             <span className="text-white">{fmt(markup)}</span>
                           </div>
                         )}
-                        <div className="flex justify-between pt-2 border-t border-stone-700 font-semibold">
+                        <div className="flex justify-between pt-2 border-t border-zinc-700 font-semibold">
                           <span className="text-white">Total</span>
-                          <span className="text-emerald-400">{fmt(total)}</span>
+                          <span className="text-amber-400">{fmt(total)}</span>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {selected.scope && (
-                    <div className="bg-stone-800 rounded-lg p-3">
-                      <p className="text-stone-400 text-xs mb-1">Scope of Work</p>
-                      <p className="text-stone-200 text-sm whitespace-pre-wrap">{selected.scope}</p>
+                    <div className="bg-zinc-800 rounded-lg p-3">
+                      <p className="text-zinc-400 text-xs mb-1">Scope of Work</p>
+                      <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.scope}</p>
                     </div>
                   )}
                   {selected.notes && (
-                    <div className="bg-stone-800 rounded-lg p-3">
-                      <p className="text-stone-400 text-xs mb-1">Notes</p>
-                      <p className="text-stone-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
+                    <div className="bg-zinc-800 rounded-lg p-3">
+                      <p className="text-zinc-400 text-xs mb-1">Notes</p>
+                      <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
                     </div>
                   )}
                   {selected.convertedJobId && (
@@ -509,7 +509,7 @@ export default function EstimatesPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-stone-600 text-stone-300 hover:bg-stone-800"
+                    className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
                     onClick={() => openEdit(selected)}
                   >
                     Edit
@@ -522,10 +522,10 @@ export default function EstimatesPage() {
                       setSelected(updated)
                     }}
                   >
-                    <SelectTrigger className="border-stone-600 text-stone-300 bg-transparent w-36">
+                    <SelectTrigger className="border-zinc-600 text-zinc-300 bg-transparent w-36">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       {ESTIMATE_STATUSES.map(s => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
@@ -533,7 +533,7 @@ export default function EstimatesPage() {
                   </Select>
                   {canConvert(selected) && (
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                      className="bg-amber-600 hover:bg-amber-500 text-white"
                       onClick={() => setConfirmConvert(selected)}
                     >
                       Convert to Job
@@ -548,7 +548,7 @@ export default function EstimatesPage() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">
               {isEditing ? `Edit ${draft?.estimateNumber}` : 'New Estimate'}
@@ -559,7 +559,7 @@ export default function EstimatesPage() {
             <div className="space-y-4 mt-2">
               {/* Status */}
               <div className="space-y-1.5">
-                <Label className="text-stone-300">Status</Label>
+                <Label className="text-zinc-300">Status</Label>
                 <Select
                   value={draft.status}
                   onValueChange={v => setDraft(d => d ? { ...d, status: v as EstimateStatus } : d)}
@@ -567,7 +567,7 @@ export default function EstimatesPage() {
                   <SelectTrigger className={inputCls}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                     {ESTIMATE_STATUSES.map(s => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
@@ -580,7 +580,7 @@ export default function EstimatesPage() {
                 <p className={sectionLabelCls}>Client Information</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5 sm:col-span-2">
-                    <Label className="text-stone-300">Client Name *</Label>
+                    <Label className="text-zinc-300">Client Name *</Label>
                     <Input
                       value={draft.client.name}
                       onChange={e => setDraft(d => d ? { ...d, client: { ...d.client, name: e.target.value } } : d)}
@@ -589,7 +589,7 @@ export default function EstimatesPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-stone-300">Phone</Label>
+                    <Label className="text-zinc-300">Phone</Label>
                     <Input
                       value={draft.client.phone}
                       onChange={e => setDraft(d => d ? { ...d, client: { ...d.client, phone: e.target.value } } : d)}
@@ -598,7 +598,7 @@ export default function EstimatesPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-stone-300">Email</Label>
+                    <Label className="text-zinc-300">Email</Label>
                     <Input
                       value={draft.client.email}
                       onChange={e => setDraft(d => d ? { ...d, client: { ...d.client, email: e.target.value } } : d)}
@@ -614,7 +614,7 @@ export default function EstimatesPage() {
                 <p className={sectionLabelCls}>Job Details</p>
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label className="text-stone-300">Property Address</Label>
+                    <Label className="text-zinc-300">Property Address</Label>
                     <Input
                       value={draft.address}
                       onChange={e => setDraft(d => d ? { ...d, address: e.target.value } : d)}
@@ -623,7 +623,7 @@ export default function EstimatesPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-stone-300">Trade</Label>
+                    <Label className="text-zinc-300">Trade</Label>
                     <Select
                       value={draft.jobType}
                       onValueChange={v => setDraft(d => d ? { ...d, jobType: v as typeof d.jobType } : d)}
@@ -631,7 +631,7 @@ export default function EstimatesPage() {
                       <SelectTrigger className={inputCls}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                         {JOB_TYPES.map(t => (
                           <SelectItem key={t} value={t}>{t}</SelectItem>
                         ))}
@@ -687,17 +687,17 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Job Parameters</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Roof Area (sq ft)</Label>
+                          <Label className="text-zinc-300 text-xs">Roof Area (sq ft)</Label>
                           <Input type="number" value={rc.squares}
                             onChange={e => setRC({ squares: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Pitch</Label>
+                          <Label className="text-zinc-300 text-xs">Pitch</Label>
                           <Select value={rc.pitch}
                             onValueChange={v => setRC({ pitch: v as typeof rc.pitch })}>
                             <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                            <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                               {PITCH_OPTIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                             </SelectContent>
                           </Select>
@@ -706,22 +706,22 @@ export default function EstimatesPage() {
                       {/* Waste slider */}
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <Label className="text-stone-300 text-xs">Waste %</Label>
-                          <span className="text-emerald-400 text-xs font-medium">{rc.wastePct || '10'}%</span>
+                          <Label className="text-zinc-300 text-xs">Waste %</Label>
+                          <span className="text-amber-400 text-xs font-medium">{rc.wastePct || '10'}%</span>
                         </div>
                         <input
                           type="range" min="5" max="30" step="1"
                           value={rc.wastePct || '10'}
                           onChange={e => setRC({ wastePct: e.target.value })}
-                          className="w-full accent-emerald-500"
+                          className="w-full accent-amber-500"
                         />
-                        <div className="flex justify-between text-stone-600 text-xs">
+                        <div className="flex justify-between text-zinc-600 text-xs">
                           <span>5%</span><span>30%</span>
                         </div>
                       </div>
                       {/* Tear-off layers */}
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Tear-Off Layers</Label>
+                        <Label className="text-zinc-300 text-xs">Tear-Off Layers</Label>
                         <div className="flex gap-2 items-center">
                           <BtnGroup
                             options={['0', '1', '2', '3'] as const}
@@ -730,7 +730,7 @@ export default function EstimatesPage() {
                           />
                           {rc.tearOffLayers !== '0' && (
                             <div className="flex items-center gap-2 ml-2">
-                              <Label className="text-stone-400 text-xs shrink-0">Rate / Sq</Label>
+                              <Label className="text-zinc-400 text-xs shrink-0">Rate / Sq</Label>
                               <Input type="number" value={rc.tearoffRate}
                                 onChange={e => setRC({ tearoffRate: e.target.value })}
                                 placeholder="35" className={`${inputCls} w-20 h-8 text-sm`} />
@@ -738,7 +738,7 @@ export default function EstimatesPage() {
                           )}
                         </div>
                         {rc.tearOffLayers === '0' && (
-                          <p className="text-stone-600 text-xs">0 = no tear-off</p>
+                          <p className="text-zinc-600 text-xs">0 = no tear-off</p>
                         )}
                       </div>
                     </div>
@@ -748,13 +748,13 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Materials</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Material Cost / Square</Label>
+                          <Label className="text-zinc-300 text-xs">Material Cost / Square</Label>
                           <Input type="number" value={rc.materialPerSq}
                             onChange={e => setRC({ materialPerSq: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Material Total</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Material Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(matTotal)}</div>
                         </div>
                       </div>
@@ -770,8 +770,8 @@ export default function EstimatesPage() {
                             onClick={() => setRC({ laborMethod: val })}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                               rc.laborMethod === val
-                                ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : 'border-stone-700 text-stone-400 hover:border-stone-500 bg-stone-900/30'
+                                ? 'bg-amber-600 border-amber-600 text-white'
+                                : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 bg-zinc-900/30'
                             }`}
                           >{label}</button>
                         ))}
@@ -780,13 +780,13 @@ export default function EstimatesPage() {
                       {rc.laborMethod === 'perSq' && (
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Labor / Square</Label>
+                            <Label className="text-zinc-300 text-xs">Labor / Square</Label>
                             <Input type="number" value={rc.laborPerSq}
                               onChange={e => setRC({ laborPerSq: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-400 text-xs">Est. Labor Total</Label>
+                            <Label className="text-zinc-400 text-xs">Est. Labor Total</Label>
                             <div className={readOnlyCls}>{fmtOrDash(laborTotal)}</div>
                           </div>
                         </div>
@@ -795,19 +795,19 @@ export default function EstimatesPage() {
                       {rc.laborMethod === 'dayRate' && (
                         <div className="grid grid-cols-3 gap-3">
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs"># Days</Label>
+                            <Label className="text-zinc-300 text-xs"># Days</Label>
                             <Input type="number" value={rc.numDays}
                               onChange={e => setRC({ numDays: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Day Rate $</Label>
+                            <Label className="text-zinc-300 text-xs">Day Rate $</Label>
                             <Input type="number" value={rc.dayRate}
                               onChange={e => setRC({ dayRate: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-400 text-xs">Est. Labor Total</Label>
+                            <Label className="text-zinc-400 text-xs">Est. Labor Total</Label>
                             <div className={readOnlyCls}>{fmtOrDash(laborTotal)}</div>
                           </div>
                         </div>
@@ -816,43 +816,43 @@ export default function EstimatesPage() {
                       {rc.laborMethod === 'hourly' && (
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs"># Workers</Label>
+                            <Label className="text-zinc-300 text-xs"># Workers</Label>
                             <Input type="number" value={rc.numWorkers}
                               onChange={e => setRC({ numWorkers: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Hours</Label>
+                            <Label className="text-zinc-300 text-xs">Hours</Label>
                             <Input type="number" value={rc.laborHours}
                               onChange={e => setRC({ laborHours: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Rate / hr</Label>
+                            <Label className="text-zinc-300 text-xs">Rate / hr</Label>
                             <Input type="number" value={rc.hourlyRate}
                               onChange={e => setRC({ hourlyRate: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-400 text-xs">Est. Labor Total</Label>
+                            <Label className="text-zinc-400 text-xs">Est. Labor Total</Label>
                             <div className={readOnlyCls}>{fmtOrDash(laborTotal)}</div>
                           </div>
                         </div>
                       )}
 
                       {/* Burden */}
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Labor Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={rc.burdenPct}
                             onChange={e => setRC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -863,13 +863,13 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Additional Line Items</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Permit Fee $</Label>
+                          <Label className="text-zinc-300 text-xs">Permit Fee $</Label>
                           <Input type="number" value={rc.permitFee}
                             onChange={e => setRC({ permitFee: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Dumpster / Haul Away $</Label>
+                          <Label className="text-zinc-300 text-xs">Dumpster / Haul Away $</Label>
                           <Input type="number" value={rc.dumpster}
                             onChange={e => setRC({ dumpster: e.target.value })}
                             placeholder="0" className={inputCls} />
@@ -877,13 +877,13 @@ export default function EstimatesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Decking — # Sheets</Label>
+                          <Label className="text-zinc-300 text-xs">Decking — # Sheets</Label>
                           <Input type="number" value={rc.deckingSheets}
                             onChange={e => setRC({ deckingSheets: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Cost / Sheet $</Label>
+                          <Label className="text-zinc-300 text-xs">Cost / Sheet $</Label>
                           <Input type="number" value={rc.deckingCostPerSheet}
                             onChange={e => setRC({ deckingCostPerSheet: e.target.value })}
                             placeholder="0" className={inputCls} />
@@ -891,13 +891,13 @@ export default function EstimatesPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Drip Edge / Flashing (LF)</Label>
+                          <Label className="text-zinc-300 text-xs">Drip Edge / Flashing (LF)</Label>
                           <Input type="number" value={rc.dripEdgeLF}
                             onChange={e => setRC({ dripEdgeLF: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Cost / LF $</Label>
+                          <Label className="text-zinc-300 text-xs">Cost / LF $</Label>
                           <Input type="number" value={rc.dripEdgeCostPerLF}
                             onChange={e => setRC({ dripEdgeCostPerLF: e.target.value })}
                             placeholder="0" className={inputCls} />
@@ -937,13 +937,13 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Equipment</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Equipment Cost</Label>
+                          <Label className="text-zinc-300 text-xs">Equipment Cost</Label>
                           <Input type="number" value={tc.equipmentCost}
                             onChange={e => setTC({ equipmentCost: e.target.value })}
                             placeholder="Units, coils, systems..." className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Equipment Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Equipment Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(equipCost)}</div>
                         </div>
                       </div>
@@ -954,19 +954,19 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Ductwork</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">LF</Label>
+                          <Label className="text-zinc-300 text-xs">LF</Label>
                           <Input type="number" value={tc.ductworkLF}
                             onChange={e => setTC({ ductworkLF: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate / LF</Label>
+                          <Label className="text-zinc-300 text-xs">Rate / LF</Label>
                           <Input type="number" value={tc.ductworkRate}
                             onChange={e => setTC({ ductworkRate: e.target.value })}
                             placeholder="18" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Ductwork Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Ductwork Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(ductworkCost)}</div>
                         </div>
                       </div>
@@ -977,34 +977,34 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Hours</Label>
+                          <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
                             onChange={e => setTC({ laborHours: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate</Label>
+                          <Label className="text-zinc-300 text-xs">Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
                             onChange={e => setTC({ hourlyRate: e.target.value })}
                             placeholder="85" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1014,7 +1014,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1050,7 +1050,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Service</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Service Call Fee (optional)</Label>
+                        <Label className="text-zinc-300 text-xs">Service Call Fee (optional)</Label>
                         <Input type="number" value={tc.serviceCallFee}
                           onChange={e => setTC({ serviceCallFee: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1062,19 +1062,19 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Fixtures</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs"># Fixtures</Label>
+                          <Label className="text-zinc-300 text-xs"># Fixtures</Label>
                           <Input type="number" value={tc.numFixtures}
                             onChange={e => setTC({ numFixtures: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Hours / Fixture</Label>
+                          <Label className="text-zinc-300 text-xs">Hours / Fixture</Label>
                           <Input type="number" value={tc.hoursPerFixture}
                             onChange={e => setTC({ hoursPerFixture: e.target.value })}
                             placeholder="2" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Fixture Labor</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Fixture Labor</Label>
                           <div className={readOnlyCls}>{fmtOrDash(fixtureLaborCost)}</div>
                         </div>
                       </div>
@@ -1085,34 +1085,34 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Extra Hours</Label>
+                          <Label className="text-zinc-300 text-xs">Extra Hours</Label>
                           <Input type="number" value={tc.laborHours}
                             onChange={e => setTC({ laborHours: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate</Label>
+                          <Label className="text-zinc-300 text-xs">Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
                             onChange={e => setTC({ hourlyRate: e.target.value })}
                             placeholder="85" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor Total</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(totalLaborCost)}</div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1122,7 +1122,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1168,19 +1168,19 @@ export default function EstimatesPage() {
                       {tc.electricalMethod === 'sqft' && (
                         <div className="grid grid-cols-3 gap-3 mt-2">
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Sq Ft</Label>
+                            <Label className="text-zinc-300 text-xs">Sq Ft</Label>
                             <Input type="number" value={tc.sqFt}
                               onChange={e => setTC({ sqFt: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Rate / Sq Ft</Label>
+                            <Label className="text-zinc-300 text-xs">Rate / Sq Ft</Label>
                             <Input type="number" value={tc.sqFtRate}
                               onChange={e => setTC({ sqFtRate: e.target.value })}
                               placeholder="5.75" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-400 text-xs">Est. Labor</Label>
+                            <Label className="text-zinc-400 text-xs">Est. Labor</Label>
                             <div className={readOnlyCls}>{fmtOrDash(sqFtCost)}</div>
                           </div>
                         </div>
@@ -1188,19 +1188,19 @@ export default function EstimatesPage() {
                       {tc.electricalMethod === 'hours' && (
                         <div className="grid grid-cols-3 gap-3 mt-2">
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Hours</Label>
+                            <Label className="text-zinc-300 text-xs">Hours</Label>
                             <Input type="number" value={tc.laborHours}
                               onChange={e => setTC({ laborHours: e.target.value })}
                               placeholder="0" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-300 text-xs">Rate</Label>
+                            <Label className="text-zinc-300 text-xs">Rate</Label>
                             <Input type="number" value={tc.hourlyRate}
                               onChange={e => setTC({ hourlyRate: e.target.value })}
                               placeholder="110" className={inputCls} />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-stone-400 text-xs">Est. Labor</Label>
+                            <Label className="text-zinc-400 text-xs">Est. Labor</Label>
                             <div className={readOnlyCls}>{fmtOrDash(hoursCost)}</div>
                           </div>
                         </div>
@@ -1212,16 +1212,16 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor Burden</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1231,7 +1231,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1267,19 +1267,19 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Area Work</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Sq Ft</Label>
+                          <Label className="text-zinc-300 text-xs">Sq Ft</Label>
                           <Input type="number" value={tc.areaSqFt}
                             onChange={e => setTC({ areaSqFt: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate / Sq Ft</Label>
+                          <Label className="text-zinc-300 text-xs">Rate / Sq Ft</Label>
                           <Input type="number" value={tc.ratePerSqFt}
                             onChange={e => setTC({ ratePerSqFt: e.target.value })}
                             placeholder="8" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Area Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Area Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(areaCost)}</div>
                         </div>
                       </div>
@@ -1290,34 +1290,34 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Hours</Label>
+                          <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
                             onChange={e => setTC({ laborHours: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate</Label>
+                          <Label className="text-zinc-300 text-xs">Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
                             onChange={e => setTC({ hourlyRate: e.target.value })}
                             placeholder="50" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor</Label>
                           <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1328,19 +1328,19 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Bulk Materials</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Cubic Yards</Label>
+                          <Label className="text-zinc-300 text-xs">Cubic Yards</Label>
                           <Input type="number" value={tc.cubicYards}
                             onChange={e => setTC({ cubicYards: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate / CY</Label>
+                          <Label className="text-zinc-300 text-xs">Rate / CY</Label>
                           <Input type="number" value={tc.cubicYardRate}
                             onChange={e => setTC({ cubicYardRate: e.target.value })}
                             placeholder="65" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Bulk Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Bulk Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(bulkCost)}</div>
                         </div>
                       </div>
@@ -1350,7 +1350,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Plants & Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1393,7 +1393,7 @@ export default function EstimatesPage() {
                           onChange={v => setTC({ paintType: v })}
                         />
                         {tc.paintType === 'Exterior' && (
-                          <span className="text-stone-500 text-xs">+30% exterior premium</span>
+                          <span className="text-zinc-500 text-xs">+30% exterior premium</span>
                         )}
                       </div>
                     </div>
@@ -1403,16 +1403,16 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Area</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Paintable Sq Ft</Label>
+                          <Label className="text-zinc-300 text-xs">Paintable Sq Ft</Label>
                           <Input type="number" value={tc.paintableSqFt}
                             onChange={e => setTC({ paintableSqFt: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Coats</Label>
+                          <Label className="text-zinc-300 text-xs">Coats</Label>
                           <Select value={tc.numCoats} onValueChange={v => setTC({ numCoats: v })}>
                             <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                            <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                               <SelectItem value="1">1 coat</SelectItem>
                               <SelectItem value="2">2 coats</SelectItem>
                               <SelectItem value="3">3 coats</SelectItem>
@@ -1420,7 +1420,7 @@ export default function EstimatesPage() {
                           </Select>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor Hours</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor Hours</Label>
                           <div className={readOnlyCls}>{estHours > 0 ? `${estHours.toFixed(1)} hrs` : '--'}</div>
                         </div>
                       </div>
@@ -1431,28 +1431,28 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor</p>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Hourly Rate</Label>
+                          <Label className="text-zinc-300 text-xs">Hourly Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
                             onChange={e => setTC({ hourlyRate: e.target.value })}
                             placeholder="60" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor Cost</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor Cost</Label>
                           <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1464,14 +1464,14 @@ export default function EstimatesPage() {
                       <div className="flex items-center gap-3">
                         <button type="button"
                           onClick={() => setTC({ prepWork: !tc.prepWork })}
-                          className={`w-10 h-5 rounded-full transition-colors ${tc.prepWork ? 'bg-emerald-600' : 'bg-stone-700'}`}>
+                          className={`w-10 h-5 rounded-full transition-colors ${tc.prepWork ? 'bg-amber-600' : 'bg-zinc-700'}`}>
                           <span className={`block w-4 h-4 mx-0.5 rounded-full bg-white transition-transform ${tc.prepWork ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
-                        <Label className="text-stone-300 text-xs">Prep work included</Label>
+                        <Label className="text-zinc-300 text-xs">Prep work included</Label>
                       </div>
                       {tc.prepWork && (
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Prep Cost</Label>
+                          <Label className="text-zinc-300 text-xs">Prep Cost</Label>
                           <Input type="number" value={tc.prepSurcharge}
                             onChange={e => setTC({ prepSurcharge: e.target.value })}
                             placeholder="0" className={inputCls} />
@@ -1483,7 +1483,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Paint & Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1517,34 +1517,34 @@ export default function EstimatesPage() {
                       <p className={sectionLabelCls}>Labor</p>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Hours</Label>
+                          <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
                             onChange={e => setTC({ laborHours: e.target.value })}
                             placeholder="0" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">Rate</Label>
+                          <Label className="text-zinc-300 text-xs">Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
                             onChange={e => setTC({ hourlyRate: e.target.value })}
                             placeholder="85" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Est. Labor</Label>
+                          <Label className="text-zinc-400 text-xs">Est. Labor</Label>
                           <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-700">
+                      <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-700">
                         <div className="space-y-1.5">
-                          <Label className="text-stone-300 text-xs">
+                          <Label className="text-zinc-300 text-xs">
                             Burden %
-                            <span className="text-stone-500 ml-1">(Taxes, insurance, benefits)</span>
+                            <span className="text-zinc-500 ml-1">(Taxes, insurance, benefits)</span>
                           </Label>
                           <Input type="number" value={tc.burdenPct}
                             onChange={e => setTC({ burdenPct: e.target.value })}
                             placeholder="35" className={inputCls} />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-stone-400 text-xs">Burden Total</Label>
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
                           <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
                         </div>
                       </div>
@@ -1554,7 +1554,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Materials</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Material Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Material Cost</Label>
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1565,7 +1565,7 @@ export default function EstimatesPage() {
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Subcontractors</p>
                       <div className="space-y-1.5">
-                        <Label className="text-stone-300 text-xs">Subcontractor Cost</Label>
+                        <Label className="text-zinc-300 text-xs">Subcontractor Cost</Label>
                         <Input type="number" value={tc.subcontractorCost}
                           onChange={e => setTC({ subcontractorCost: e.target.value })}
                           placeholder="0" className={inputCls} />
@@ -1590,39 +1590,39 @@ export default function EstimatesPage() {
               {(() => {
                 const { total } = calcEstimateTotal(draft)
                 return total > 0 ? (
-                  <div className="bg-stone-800 rounded-lg px-3 py-2 flex justify-between items-center">
-                    <span className="text-stone-400 text-sm">Estimated Total</span>
-                    <span className="text-emerald-400 font-semibold">{fmt(total)}</span>
+                  <div className="bg-zinc-800 rounded-lg px-3 py-2 flex justify-between items-center">
+                    <span className="text-zinc-400 text-sm">Estimated Total</span>
+                    <span className="text-amber-400 font-semibold">{fmt(total)}</span>
                   </div>
                 ) : null
               })()}
 
               {/* Scope */}
               <div className="space-y-1.5">
-                <Label className="text-stone-300">Scope of Work</Label>
+                <Label className="text-zinc-300">Scope of Work</Label>
                 <textarea value={draft.scope}
                   onChange={e => setDraft(d => d ? { ...d, scope: e.target.value } : d)}
                   rows={3} placeholder="Describe the work to be performed..."
-                  className="w-full rounded-md bg-stone-800 border border-stone-700 text-white placeholder:text-stone-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                  className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-600" />
               </div>
 
               {/* Notes */}
               <div className="space-y-1.5">
-                <Label className="text-stone-300">Internal Notes</Label>
+                <Label className="text-zinc-300">Internal Notes</Label>
                 <textarea value={draft.notes}
                   onChange={e => setDraft(d => d ? { ...d, notes: e.target.value } : d)}
                   rows={2} placeholder="Internal notes (not visible to client)..."
-                  className="w-full rounded-md bg-stone-800 border border-stone-700 text-white placeholder:text-stone-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                  className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-600" />
               </div>
             </div>
           )}
 
           <DialogFooter className="mt-6">
-            <Button variant="ghost" className="text-stone-400 hover:text-white" onClick={() => setDialogOpen(false)}>
+            <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              className="bg-amber-600 hover:bg-amber-500 text-white"
               onClick={handleSave}
               disabled={!draft?.client.name.trim()}
             >
@@ -1634,16 +1634,16 @@ export default function EstimatesPage() {
 
       {/* Convert Confirm */}
       <Dialog open={!!confirmConvert} onOpenChange={() => setConfirmConvert(null)}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-sm">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">Convert to Job?</DialogTitle>
           </DialogHeader>
-          <p className="text-stone-400 text-sm">
+          <p className="text-zinc-400 text-sm">
             This will create a new job from <span className="text-white font-medium">{confirmConvert?.estimateNumber}</span> and mark the estimate as converted.
           </p>
           <DialogFooter className="mt-4">
-            <Button variant="ghost" className="text-stone-400" onClick={() => setConfirmConvert(null)}>Cancel</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            <Button variant="ghost" className="text-zinc-400" onClick={() => setConfirmConvert(null)}>Cancel</Button>
+            <Button className="bg-amber-600 hover:bg-amber-500 text-white"
               onClick={() => confirmConvert && handleConvert(confirmConvert)}>
               Convert
             </Button>
@@ -1653,13 +1653,13 @@ export default function EstimatesPage() {
 
       {/* Delete Confirm */}
       <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-white max-w-sm">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">Delete Estimate?</DialogTitle>
           </DialogHeader>
-          <p className="text-stone-400 text-sm">This action cannot be undone.</p>
+          <p className="text-zinc-400 text-sm">This action cannot be undone.</p>
           <DialogFooter className="mt-4">
-            <Button variant="ghost" className="text-stone-400" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+            <Button variant="ghost" className="text-zinc-400" onClick={() => setConfirmDelete(null)}>Cancel</Button>
             <Button className="bg-red-700 hover:bg-red-600 text-white" onClick={() => handleDelete(confirmDelete!)}>
               Delete
             </Button>

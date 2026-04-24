@@ -8,13 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { type Employee, roleColors, statusColors, timeWithCompany } from '@/types/employee'
 import { useEmployees } from '@/context/EmployeeContext'
 import { useTimeClock } from '@/context/TimeClockContext'
-import { calcHours, fmtTime, fmtHours } from '@/types/timeclock'
+import { calcHours, fmtHours } from '@/types/timeclock'
+import { usePreferences, formatDate, formatTime } from '@/context/PreferencesContext'
+import { toast } from 'sonner'
 
 export default function EmployeeProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { employees, updateEmployee } = useEmployees()
   const { entries } = useTimeClock()
+  const { prefs } = usePreferences()
+
+  function fmt(iso: string | null): string {
+    if (!iso) return '—'
+    const d = new Date(iso)
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return formatTime(`${hh}:${mm}`, prefs.timeFormat)
+  }
+
   const empEntries = entries
     .filter(e => e.employeeId === id)
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -25,9 +37,9 @@ export default function EmployeeProfilePage() {
 
   if (!employee || !form) {
     return (
-      <div className="text-center text-stone-400 mt-20">
+      <div className="text-center text-zinc-400 mt-20">
         <p>Employee not found.</p>
-        <Button onClick={() => navigate('/employees')} className="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white">Back to Employees</Button>
+        <Button onClick={() => navigate('/employees')} className="mt-4 bg-amber-600 hover:bg-amber-500 text-white">Back to Employees</Button>
       </div>
     )
   }
@@ -48,6 +60,7 @@ export default function EmployeeProfilePage() {
     if (!form) return
     updateEmployee(form)
     setEditing(false)
+    toast.success('Profile saved')
   }
 
   function handleCancel() {
@@ -55,35 +68,30 @@ export default function EmployeeProfilePage() {
     setEditing(false)
   }
 
-  function formatDate(date: string) {
-    if (!date) return '—'
-    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-  }
-
   const data = editing ? form : employee
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 text-white">
       {/* Back */}
-      <button onClick={() => navigate('/employees')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
+      <button onClick={() => navigate('/employees')} className="text-zinc-400 hover:text-white text-sm flex items-center gap-1">
         ← Back to Employees
       </button>
 
       {/* Profile Header */}
-      <Card className="bg-stone-900 border-stone-800 text-white">
+      <Card className="bg-zinc-900 border-zinc-800 text-white">
         <CardContent className="pt-6">
           <div className="flex items-center gap-6">
             <div className="relative">
               {data.profilePicture ? (
-                <img src={data.profilePicture} className="w-24 h-24 rounded-full object-cover border-2 border-stone-700" />
+                <img src={data.profilePicture} className="w-24 h-24 rounded-full object-cover border-2 border-zinc-700" />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-stone-700 flex items-center justify-center text-3xl font-bold text-stone-300 border-2 border-stone-600">
+                <div className="w-24 h-24 rounded-full bg-zinc-700 flex items-center justify-center text-3xl font-bold text-zinc-300 border-2 border-zinc-600">
                   {data.name.charAt(0).toUpperCase()}
                 </div>
               )}
               <button
                 onClick={() => fileRef.current?.click()}
-                className="absolute bottom-0 right-0 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
+                className="absolute bottom-0 right-0 bg-amber-600 hover:bg-amber-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
                 title="Upload photo"
               >
                 +
@@ -97,17 +105,17 @@ export default function EmployeeProfilePage() {
                 <span className={`px-2 py-1 rounded text-xs font-medium ${roleColors[employee.role]}`}>{employee.role}</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[employee.status]}`}>{employee.status}</span>
               </div>
-              <p className="text-stone-400 text-sm mt-2">With the company for <span className="text-emerald-400 font-medium">{timeWithCompany(employee.hireDate)}</span></p>
+              <p className="text-zinc-400 text-sm mt-2">With the company for <span className="text-amber-400 font-medium">{timeWithCompany(employee.hireDate)}</span></p>
             </div>
 
             <div>
               {editing ? (
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Save</Button>
-                  <Button onClick={handleCancel} variant="ghost" className="text-stone-400 hover:text-white text-sm">Cancel</Button>
+                  <Button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white text-sm">Save</Button>
+                  <Button onClick={handleCancel} variant="ghost" className="text-zinc-400 hover:text-white text-sm">Cancel</Button>
                 </div>
               ) : (
-                <Button onClick={() => setEditing(true)} className="bg-stone-700 hover:bg-stone-600 text-white text-sm">Edit Profile</Button>
+                <Button onClick={() => setEditing(true)} className="bg-zinc-700 hover:bg-zinc-600 text-white text-sm">Edit Profile</Button>
               )}
             </div>
           </div>
@@ -116,9 +124,9 @@ export default function EmployeeProfilePage() {
 
       {/* Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-stone-400 font-medium">Contact</CardTitle>
+            <CardTitle className="text-sm text-zinc-400 font-medium">Contact</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {editing ? (
@@ -137,34 +145,37 @@ export default function EmployeeProfilePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-stone-400 font-medium">Employment</CardTitle>
+            <CardTitle className="text-sm text-zinc-400 font-medium">Employment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {editing ? (
               <>
                 <Field label="Hire Date" value={form.hireDate} onChange={v => setForm({ ...form, hireDate: v })} type="date" />
                 <div className="space-y-1">
-                  <Label className="text-stone-500 text-xs">Role</Label>
+                  <Label className="text-zinc-500 text-xs">Role</Label>
                   <Select value={form.role} onValueChange={v => setForm({ ...form, role: v as Employee['role'] })}>
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-white h-8 text-sm">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-8 text-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                      <SelectItem value="Laborer">Laborer</SelectItem>
                       <SelectItem value="Employee">Employee</SelectItem>
+                      <SelectItem value="Lead">Lead</SelectItem>
                       <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="Sub-Admin">Sub-Admin</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-stone-500 text-xs">Status</Label>
+                  <Label className="text-zinc-500 text-xs">Status</Label>
                   <Select value={form.status} onValueChange={v => setForm({ ...form, status: v as Employee['status'] })}>
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-white h-8 text-sm">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-8 text-sm">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700 text-white">
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       <SelectItem value="Active">Active</SelectItem>
                       <SelectItem value="Inactive">Inactive</SelectItem>
                       <SelectItem value="Archived">Archived</SelectItem>
@@ -174,7 +185,7 @@ export default function EmployeeProfilePage() {
               </>
             ) : (
               <>
-                <InfoRow label="Hire Date" value={formatDate(employee.hireDate)} />
+                <InfoRow label="Hire Date" value={formatDate(employee.hireDate, prefs.dateFormat)} />
                 <InfoRow label="Time with Company" value={timeWithCompany(employee.hireDate)} />
                 <InfoRow label="Role" value={employee.role} />
               </>
@@ -182,22 +193,22 @@ export default function EmployeeProfilePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-stone-400 font-medium">Personal</CardTitle>
+            <CardTitle className="text-sm text-zinc-400 font-medium">Personal</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {editing ? (
               <Field label="Birthday" value={form.birthdate} onChange={v => setForm({ ...form, birthdate: v })} type="date" />
             ) : (
-              <InfoRow label="Birthday" value={formatDate(employee.birthdate)} />
+              <InfoRow label="Birthday" value={formatDate(employee.birthdate, prefs.dateFormat)} />
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-stone-900 border-stone-800 text-white">
+        <Card className="bg-zinc-900 border-zinc-800 text-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-stone-400 font-medium">Emergency Contact</CardTitle>
+            <CardTitle className="text-sm text-zinc-400 font-medium">Emergency Contact</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {editing ? (
@@ -216,9 +227,9 @@ export default function EmployeeProfilePage() {
       </div>
 
       {/* Notes */}
-      <Card className="bg-stone-900 border-stone-800 text-white">
+      <Card className="bg-zinc-900 border-zinc-800 text-white">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-stone-400 font-medium">Notes</CardTitle>
+          <CardTitle className="text-sm text-zinc-400 font-medium">Notes</CardTitle>
         </CardHeader>
         <CardContent>
           {editing ? (
@@ -226,29 +237,29 @@ export default function EmployeeProfilePage() {
               value={form.notes}
               onChange={e => setForm({ ...form, notes: e.target.value })}
               placeholder="Add notes about this employee..."
-              className="w-full bg-stone-800 border border-stone-700 text-white text-sm rounded-md p-2 placeholder:text-stone-500 resize-none h-24 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              className="w-full bg-zinc-800 border border-zinc-700 text-white text-sm rounded-md p-2 placeholder:text-zinc-500 resize-none h-24 focus:outline-none focus:ring-1 focus:ring-amber-600"
             />
           ) : (
-            <p className="text-stone-300 text-sm whitespace-pre-wrap">{employee.notes || '—'}</p>
+            <p className="text-zinc-300 text-sm whitespace-pre-wrap">{employee.notes || '—'}</p>
           )}
         </CardContent>
       </Card>
 
       {/* Time History */}
-      <Card className="bg-stone-900 border-stone-800 text-white">
+      <Card className="bg-zinc-900 border-zinc-800 text-white">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-stone-400 font-medium">Time History</CardTitle>
+          <CardTitle className="text-sm text-zinc-400 font-medium">Time History</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {empEntries.length === 0 ? (
-            <p className="text-stone-500 text-sm px-4 py-6">No time records yet.</p>
+            <p className="text-zinc-500 text-sm px-4 py-6">No time records yet.</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[560px]">
               <thead>
-                <tr className="border-b border-stone-800 text-stone-400">
+                <tr className="border-b border-zinc-800 text-zinc-400">
                   <th className="text-left px-4 py-3 font-medium">Date</th>
                   <th className="text-left px-4 py-3 font-medium">Clock In</th>
-                  <th className="text-left px-4 py-3 font-medium">Lunch</th>
+                  <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Lunch</th>
                   <th className="text-left px-4 py-3 font-medium">Clock Out</th>
                   <th className="text-left px-4 py-3 font-medium">Total</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
@@ -256,18 +267,18 @@ export default function EmployeeProfilePage() {
               </thead>
               <tbody>
                 {empEntries.map(entry => (
-                  <tr key={entry.id} className="border-b border-stone-800 hover:bg-stone-800 transition-colors">
-                    <td className="px-4 py-3 text-white">{new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
-                    <td className="px-4 py-3 text-stone-400">{fmtTime(entry.clockIn)}</td>
-                    <td className="px-4 py-3 text-stone-400">
-                      {entry.lunchStart ? `${fmtTime(entry.lunchStart)} – ${fmtTime(entry.lunchEnd)}` : '—'}
+                  <tr key={entry.id} className="border-b border-zinc-800 hover:bg-zinc-800 transition-colors">
+                    <td className="px-4 py-3 text-white">{formatDate(entry.date, prefs.dateFormat)}</td>
+                    <td className="px-4 py-3 text-zinc-400">{fmt(entry.clockIn)}</td>
+                    <td className="px-4 py-3 text-zinc-400 hidden sm:table-cell">
+                      {entry.lunchStart ? `${fmt(entry.lunchStart)} – ${fmt(entry.lunchEnd)}` : '—'}
                     </td>
-                    <td className="px-4 py-3 text-stone-400">{fmtTime(entry.clockOut)}</td>
-                    <td className="px-4 py-3 text-emerald-400 font-mono">{fmtHours(calcHours(entry))}</td>
+                    <td className="px-4 py-3 text-zinc-400">{fmt(entry.clockOut)}</td>
+                    <td className="px-4 py-3 text-amber-400 tabular-nums">{fmtHours(calcHours(entry))}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        entry.status === 'approved' ? 'bg-emerald-900 text-emerald-300' :
-                        entry.status === 'completed' ? 'bg-stone-700 text-stone-300' :
+                        entry.status === 'approved' ? 'bg-amber-900 text-amber-300' :
+                        entry.status === 'completed' ? 'bg-zinc-700 text-zinc-300' :
                         entry.status === 'pending_edit' ? 'bg-yellow-900 text-yellow-300' :
                         'bg-blue-900 text-blue-300'
                       }`}>
@@ -290,7 +301,7 @@ export default function EmployeeProfilePage() {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-stone-500 text-xs">{label}</p>
+      <p className="text-zinc-500 text-xs">{label}</p>
       <p className="text-white text-sm">{value || '—'}</p>
     </div>
   )
@@ -299,9 +310,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function Field({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
     <div className="space-y-1">
-      <Label className="text-stone-500 text-xs">{label}</Label>
+      <Label className="text-zinc-500 text-xs">{label}</Label>
       <Input type={type} value={value} onChange={e => onChange(e.target.value)}
-        className="bg-stone-800 border-stone-700 text-white h-8 text-sm" />
+        className="bg-zinc-800 border-zinc-700 text-white h-8 text-sm" />
     </div>
   )
 }

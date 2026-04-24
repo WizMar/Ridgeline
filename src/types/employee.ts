@@ -30,16 +30,16 @@ export const emptyEmployee: Omit<Employee, 'id'> = {
 }
 
 export const roleColors: Record<string, string> = {
-  Admin: 'bg-emerald-900 text-emerald-300',
+  Admin: 'bg-amber-900 text-amber-300',
   'Sub-Admin': 'bg-teal-900 text-teal-300',
   Sales: 'bg-blue-900 text-blue-300',
   Lead: 'bg-orange-900 text-orange-300',
-  Employee: 'bg-stone-700 text-stone-300',
-  Laborer: 'bg-stone-700 text-stone-400',
+  Employee: 'bg-zinc-700 text-zinc-300',
+  Laborer: 'bg-zinc-700 text-zinc-400',
 }
 
 export const statusColors: Record<string, string> = {
-  Active: 'bg-emerald-900 text-emerald-300',
+  Active: 'bg-amber-900 text-amber-300',
   Inactive: 'bg-yellow-900 text-yellow-300',
   Archived: 'bg-red-900 text-red-300',
 }
