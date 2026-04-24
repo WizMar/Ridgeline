@@ -64,6 +64,9 @@ export default function TimeClockPage() {
 
   const todayEntries = entries.filter(e => e.date === today)
   const activeEntries = entries.filter(e => e.status === 'active' || e.status === 'on_lunch')
+  const visibleActiveEntries = canSeeLiveView
+    ? activeEntries
+    : activeEntries.filter(e => e.employeeId === myEmployee?.id)
   const pendingEdits = entries.filter(e => e.status === 'pending_edit')
 
   // Continuous GPS polling every 2 minutes for all clocked-in employees
@@ -176,15 +179,16 @@ export default function TimeClockPage() {
         <p className="text-zinc-400 text-sm mt-1">Track employee hours with GPS location.</p>
       </div>
 
-{/* Live View — Who's Clocked In (Admin + Sub-Admin only) */}
-      {canSeeLiveView && (
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">Currently Clocked In</h3>
-          {activeEntries.length === 0 ? (
-            <p className="text-zinc-500 text-sm">No one is clocked in right now.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeEntries.map(entry => {
+{/* Live View */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-3">Currently Clocked In</h3>
+        {visibleActiveEntries.length === 0 ? (
+          <p className="text-zinc-500 text-sm">
+            {canSeeLiveView ? 'No one is clocked in right now.' : 'You are not clocked in.'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleActiveEntries.map(entry => {
                 const locLabel = entry.currentLocation
                   ? `Last updated ${fmt(entry.locationUpdatedAt)}`
                   : entry.clockInLocation ? `Clock-in location` : null
@@ -216,8 +220,7 @@ export default function TimeClockPage() {
               })}
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       {/* Employee Clock In/Out Panel */}
       <div>
