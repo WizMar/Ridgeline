@@ -69,7 +69,10 @@ export function useChannels() {
   }, [user?.org_id, user?.id])
 
   const findOrCreateDM = useCallback(async (otherUserId: string): Promise<Channel | null> => {
-    if (!user?.org_id || !user?.id) return null
+    if (!user?.org_id || !user?.id) {
+      toast.error('Session missing org — try signing out and back in')
+      return null
+    }
 
     // Return existing DM if one already exists
     const existing = channels.find(c =>
@@ -114,7 +117,10 @@ export function useChannels() {
   }, [channels, user])
 
   const createGroup = useCallback(async (name: string | null, memberIds: string[]): Promise<Channel | null> => {
-    if (!user?.org_id || !user?.id) return null
+    if (!user?.org_id || !user?.id) {
+      toast.error('Session missing org — try signing out and back in')
+      return null
+    }
 
     const channelId = crypto.randomUUID()
     const now = new Date().toISOString()

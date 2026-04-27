@@ -160,23 +160,25 @@ export default function MessagesPage() {
 
   async function handleStartDM(userId: string) {
     setCreating(true)
-    setModal(null)
     const ch = await findOrCreateDM(userId)
+    setCreating(false)
     if (ch) {
+      setModal(null)
       selectTarget(ch.id, ch)
     }
-    setCreating(false)
   }
 
   async function handleCreateGroup() {
     if (selectedUsers.length === 0) return
     setCreating(true)
     const ch = await createGroup(groupName || null, selectedUsers)
-    setModal(null)
-    setGroupName('')
-    setSelectedUsers([])
-    if (ch) selectTarget(ch.id, ch)
     setCreating(false)
+    if (ch) {
+      setModal(null)
+      setGroupName('')
+      setSelectedUsers([])
+      selectTarget(ch.id, ch)
+    }
   }
 
   function toggleUser(id: string) {
