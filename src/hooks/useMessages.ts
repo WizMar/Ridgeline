@@ -45,7 +45,7 @@ export function useMessages() {
         if (data) {
           const rows = data.map(r => toMessage({
             ...r,
-            sender_name: (r.profiles as { name: string } | null)?.name ?? 'Unknown',
+            sender_name: (r.profiles as unknown as { name: string } | null)?.name ?? 'Unknown',
           })).reverse()
           setMessages(rows)
           setHasMore(data.length === PAGE_SIZE)
@@ -88,7 +88,7 @@ export function useMessages() {
     if (data && data.length > 0) {
       const rows = data.map(r => toMessage({
         ...r,
-        sender_name: (r.profiles as { name: string } | null)?.name ?? 'Unknown',
+        sender_name: (r.profiles as unknown as { name: string } | null)?.name ?? 'Unknown',
       })).reverse()
       setMessages(prev => [...rows, ...prev])
       setHasMore(data.length === PAGE_SIZE)
