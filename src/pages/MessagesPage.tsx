@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useMessages, type MessageTarget } from '@/hooks/useMessages'
 import { useChannels, type Channel } from '@/hooks/useChannels'
 import { useAuth } from '@/context/AuthContext'
-import { useEmployees } from '@/context/EmployeeContext'
 import { Send, MessageSquare, Plus, Users, X, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -135,8 +134,7 @@ function MessageThread({ target, myId }: { target: MessageTarget; myId: string }
 
 export default function MessagesPage() {
   const { user } = useAuth()
-  const { channels, loading: chLoading, findOrCreateDM, createGroup } = useChannels()
-  const { employees } = useEmployees()
+  const { channels, loading: chLoading, findOrCreateDM, createGroup, orgMembers } = useChannels()
 
   const [activeTarget, setActiveTarget] = useState<MessageTarget>('org')
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null)
@@ -149,8 +147,6 @@ export default function MessagesPage() {
   const myId = user?.id ?? ''
   const dms = channels.filter(c => c.type === 'dm')
   const groups = channels.filter(c => c.type === 'group')
-
-  const orgMembers = employees.filter(e => e.status === 'Active' && e.id !== myId)
 
   function selectTarget(target: MessageTarget, channel: Channel | null = null) {
     setActiveTarget(target)
@@ -291,7 +287,7 @@ export default function MessagesPage() {
             <div className="p-4 space-y-1.5 max-h-72 overflow-y-auto">
               {orgMembers.length === 0 && <p className="text-zinc-500 text-sm text-center py-4">No other members in your org.</p>}
               {orgMembers.map(emp => (
-                <button key={emp.id} onClick={() => handleStartDM(emp.id)} disabled={creating}
+                <button key={emp.userId} onClick={() => handleStartDM(emp.userId)} disabled={creating}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-800 transition-colors text-left disabled:opacity-50">
                   <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-zinc-300 shrink-0 font-medium">
                     {emp.name.charAt(0).toUpperCase()}
@@ -325,15 +321,15 @@ export default function MessagesPage() {
               <div className="space-y-1 max-h-52 overflow-y-auto">
                 <p className="text-zinc-500 text-xs mb-2">Select members</p>
                 {orgMembers.map(emp => (
-                  <button key={emp.id} onClick={() => toggleUser(emp.id)}
+                  <button key={emp.userId} onClick={() => toggleUser(emp.userId)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                      selectedUsers.includes(emp.id) ? 'bg-stone-500/20 border border-stone-500/40' : 'hover:bg-zinc-800 border border-transparent'
+                      selectedUsers.includes(emp.userId) ? 'bg-stone-500/20 border border-stone-500/40' : 'hover:bg-zinc-800 border border-transparent'
                     }`}>
                     <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-zinc-300 shrink-0">
                       {emp.name.charAt(0).toUpperCase()}
                     </div>
                     <p className="text-white text-sm flex-1">{emp.name}</p>
-                    {selectedUsers.includes(emp.id) && <div className="w-2 h-2 rounded-full bg-stone-400 shrink-0" />}
+                    {selectedUsers.includes(emp.userId) && <div className="w-2 h-2 rounded-full bg-stone-400 shrink-0" />}
                   </button>
                 ))}
               </div>
