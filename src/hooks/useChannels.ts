@@ -69,10 +69,13 @@ export function useChannels() {
   }, [user?.org_id, user?.id])
 
   const findOrCreateDM = useCallback(async (otherUserId: string): Promise<Channel | null> => {
-    if (!user?.org_id || !user?.id) {
-      toast.error('Session missing org — try signing out and back in')
-      return null
+    if (!user?.id) { toast.error('Not logged in'); return null }
+    let orgId = user.org_id
+    if (!orgId) {
+      const { data } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
+      orgId = (data?.org_id as string) ?? null
     }
+    if (!orgId) { toast.error('Missing organization — contact your admin'); return null }
 
     // Return existing DM if one already exists
     const existing = channels.find(c =>
@@ -88,7 +91,7 @@ export function useChannels() {
 
     const { error: chErr } = await supabase
       .from('channels')
-      .insert({ id: channelId, org_id: user.org_id, type: 'dm', created_by: user.id, created_at: now })
+      .insert({ id: channelId, org_id: orgId, type: 'dm', created_by: user.id, created_at: now })
     if (chErr) { toast.error(`Failed to create DM: ${chErr.message}`); return null }
 
     // Insert both members
@@ -103,7 +106,7 @@ export function useChannels() {
 
     const newChannel: Channel = {
       id: channelId,
-      orgId: user.org_id,
+      orgId: orgId,
       type: 'dm',
       name: null,
       members: [
@@ -117,10 +120,13 @@ export function useChannels() {
   }, [channels, user])
 
   const createGroup = useCallback(async (name: string | null, memberIds: string[]): Promise<Channel | null> => {
-    if (!user?.org_id || !user?.id) {
-      toast.error('Session missing org — try signing out and back in')
-      return null
+    if (!user?.id) { toast.error('Not logged in'); return null }
+    let orgId = user.org_id
+    if (!orgId) {
+      const { data } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
+      orgId = (data?.org_id as string) ?? null
     }
+    if (!orgId) { toast.error('Missing organization — contact your admin'); return null }
 
     const channelId = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -128,7 +134,7 @@ export function useChannels() {
 
     const { error: chErr } = await supabase
       .from('channels')
-      .insert({ id: channelId, org_id: user.org_id, type: 'group', name: trimmedName, created_by: user.id, created_at: now })
+      .insert({ id: channelId, org_id: orgId, type: 'group', name: trimmedName, created_by: user.id, created_at: now })
     if (chErr) { toast.error(`Failed to create group: ${chErr.message}`); return null }
 
     const allIds = Array.from(new Set([user.id, ...memberIds]))
@@ -146,7 +152,7 @@ export function useChannels() {
 
     const newChannel: Channel = {
       id: channelId,
-      orgId: user.org_id,
+      orgId: orgId,
       type: 'group',
       name: trimmedName,
       members,
