@@ -135,7 +135,7 @@ function MessageThread({ target, myId }: { target: MessageTarget; myId: string }
 
 export default function MessagesPage() {
   const { user } = useAuth()
-  const { channels, loading: chLoading, findOrCreateDM, createGroup, refetch } = useChannels()
+  const { channels, loading: chLoading, findOrCreateDM, createGroup } = useChannels()
   const { employees } = useEmployees()
 
   const [activeTarget, setActiveTarget] = useState<MessageTarget>('org')
@@ -162,7 +162,6 @@ export default function MessagesPage() {
     setCreating(true)
     setModal(null)
     const ch = await findOrCreateDM(userId)
-    await refetch()
     if (ch) {
       selectTarget(ch.id, ch)
     }
@@ -173,7 +172,6 @@ export default function MessagesPage() {
     if (!groupName.trim() || selectedUsers.length === 0) return
     setCreating(true)
     const ch = await createGroup(groupName, selectedUsers)
-    await refetch()
     setModal(null)
     setGroupName('')
     setSelectedUsers([])
