@@ -5,6 +5,7 @@ import { EmployeeProvider } from './context/EmployeeContext'
 import { TimeClockProvider } from './context/TimeClockContext'
 import { SettingsProvider } from './context/SettingsContext'
 import { JobsProvider } from './context/JobsContext'
+import { ClientsProvider } from './context/ClientsContext'
 import { EstimatesProvider } from './context/EstimatesContext'
 import { PreferencesProvider } from './context/PreferencesContext'
 import { PriceBookProvider } from './context/PriceBookContext'
@@ -14,6 +15,9 @@ import AcceptInvitePage from './pages/AcceptInvitePage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import JobsPage from './pages/JobsPage'
+import JobDetailPage from './pages/JobDetailPage'
+import ClientsPage from './pages/ClientsPage'
+import ClientProfilePage from './pages/ClientProfilePage'
 import EstimatesPage from './pages/EstimatesPage'
 import EmployeesPage from './pages/EmployeesPage'
 import EmployeeProfilePage from './pages/EmployeeProfilePage'
@@ -45,6 +49,7 @@ function AppRoutes() {
     <PreferencesProvider>
     <SettingsProvider>
     <PriceBookProvider>
+    <ClientsProvider>
     <EstimatesProvider>
     <JobsProvider>
     <TimeClockProvider>
@@ -56,8 +61,11 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={can('view:dashboard') ? <DashboardPage /> : <Navigate to="/timeclock" replace />} />
           <Route path="/timeclock" element={<TimeClockPage />} />
+          <Route path="/clients" element={can('view:clients') ? <ClientsPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/clients/:clientId" element={can('view:clients') ? <ClientProfilePage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/jobs" element={can('view:jobs:all') || can('view:jobs:assigned') ? <JobsPage /> : <Navigate to="/dashboard" replace />} />
-          <Route path="/estimates" element={can('view:estimates') ? <EstimatesPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/jobs/:jobId" element={can('view:jobs:all') || can('view:jobs:assigned') ? <JobDetailPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/estimates" element={can('manage:estimates') ? <EstimatesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/employees" element={can('view:employees') ? <EmployeesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/employees/:id" element={can('view:employees') ? <EmployeeProfilePage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/settings" element={can('manage:settings') ? <SettingsPage /> : <Navigate to="/dashboard" replace />} />
@@ -70,6 +78,7 @@ function AppRoutes() {
     </TimeClockProvider>
     </JobsProvider>
     </EstimatesProvider>
+    </ClientsProvider>
     </PriceBookProvider>
     </SettingsProvider>
     </PreferencesProvider>

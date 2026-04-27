@@ -26,6 +26,7 @@ export default function ApprovePage() {
   const [approving, setApproving] = useState(false)
   const [approved, setApproved] = useState(false)
   const [error, setError] = useState('')
+  const [photos, setPhotos] = useState<Array<{ id: string; url: string; type: string; category: string }>>([])
 
   useEffect(() => {
     if (!token) { setNotFound(true); setLoading(false); return }
@@ -38,6 +39,9 @@ export default function ApprovePage() {
         if (row.approval_status === 'approved') setApproved(true)
       }
       setLoading(false)
+    })
+    supabase.rpc('get_job_media_by_token', { p_token: token }).then(({ data }) => {
+      if (data) setPhotos(Array.isArray(data) ? data : [])
     })
   }, [token])
 
@@ -104,6 +108,37 @@ export default function ApprovePage() {
                   </div>
                 )}
               </div>
+
+              {photos.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-zinc-500 text-xs uppercase tracking-wide">Job Photos</p>
+                  {(['before', 'during', 'damage', 'after'] as const).map(cat => {
+                    const catMedia = photos.filter(p => p.category === cat)
+                    if (catMedia.length === 0) return null
+                    return (
+                      <div key={cat}>
+                        <p className="text-zinc-400 text-xs capitalize mb-2">{cat}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {catMedia.map(p => (
+                            <div key={p.id} className="aspect-square rounded-lg overflow-hidden bg-zinc-800">
+                              {p.type === 'video' ? (
+                                <video src={p.url} className="w-full h-full object-cover" controls />
+                              ) : (
+                                <img
+                                  src={p.url}
+                                  alt=""
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => window.open(p.url, '_blank')}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
               <div className="border-t border-zinc-800" />
 

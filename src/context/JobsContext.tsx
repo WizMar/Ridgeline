@@ -39,6 +39,8 @@ function toJob(row: Record<string, unknown>): Job {
     approvalToken: (row.approval_token as string) ?? null,
     approvedAt: (row.approved_at as string) ?? null,
     approverName: (row.approver_name as string) ?? null,
+    clientId: (row.client_id as string) ?? null,
+    propertyId: (row.property_id as string) ?? null,
   }
 }
 
@@ -80,6 +82,8 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       notes: job.notes,
       scope: job.scope,
       scheduled_date: job.scheduledDate,
+      client_id: job.clientId || null,
+      property_id: job.propertyId || null,
     }).select().single()
     if (data && !error) setJobs(prev => [toJob(data), ...prev])
   }
@@ -104,6 +108,8 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       approval_token: job.approvalToken,
       approved_at: job.approvedAt,
       approver_name: job.approverName,
+      client_id: job.clientId || null,
+      property_id: job.propertyId || null,
       updated_at: new Date().toISOString(),
     }).eq('id', job.id)
     if (!error) setJobs(prev => prev.map(j => j.id === job.id ? job : j))

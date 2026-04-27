@@ -728,7 +728,7 @@ function downloadTemplate() {
   ws['!cols'] = [{ wch: 32 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 12 }]
   const wb = utils.book_new()
   utils.book_append_sheet(wb, ws, 'Price Book')
-  writeFile(wb, 'ridgeline-pricebook-template.xlsx')
+  writeFile(wb, 'nexus-pricebook-template.xlsx')
 }
 
 function PriceBookSection({ onBack }: { onBack: () => void }) {

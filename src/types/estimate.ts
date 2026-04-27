@@ -111,6 +111,13 @@ export type TradeCalc = {
 
   // General / Other
   subcontractorCost: string
+
+  // Repair / T&M
+  repairLaborMethod: 'hourly' | 'dayRate' | 'flatRate'
+  numWorkers: string
+  numDays: string
+  dayRate: string
+  flatLaborRate: string
 }
 
 export type Estimate = {
@@ -129,9 +136,11 @@ export type Estimate = {
   lineItems: LineItem[]
   notes: string
   scope: string
+  declineReason?: string
   createdAt: string
   updatedAt: string
   convertedJobId: string | null
+  jobId: string | null
 }
 
 export const ESTIMATE_STATUSES: EstimateStatus[] = ['Draft', 'Submitted', 'Approved', 'Sent', 'Declined']
@@ -331,6 +340,26 @@ export function calcEstimateTotal(e: Estimate): EstimateTotals {
       ? (parseFloat(e.tradeCalc.sellPrice) || undefined)
       : undefined
     return finish(coreCost, mPct, sellPriceOverride)
+  }
+
+  if (e.jobType === 'Repair') {
+    const method = e.tradeCalc.repairLaborMethod ?? 'hourly'
+    const burdenPct = parseFloat(e.tradeCalc.burdenPct) || 0
+    let laborBase = 0
+    if (method === 'hourly') {
+      laborBase = (parseFloat(e.tradeCalc.laborHours) || 0) * (parseFloat(e.tradeCalc.hourlyRate) || 0)
+    } else if (method === 'dayRate') {
+      laborBase = (parseFloat(e.tradeCalc.numWorkers) || 0) * (parseFloat(e.tradeCalc.numDays) || 0) * (parseFloat(e.tradeCalc.dayRate) || 0)
+    } else {
+      laborBase = parseFloat(e.tradeCalc.flatLaborRate) || 0
+    }
+    const { labor, burden } = withBurden(laborBase, burdenPct)
+    const mat = parseFloat(e.tradeCalc.materialCost) || 0
+    const mPct = parseFloat(e.tradeCalc.markupPct) || 0
+    if (labor > 0) breakdown.push({ label: 'Labor', amount: labor })
+    if (burden > 0) breakdown.push({ label: `Labor Burden (${burdenPct}%)`, amount: burden })
+    if (mat > 0) breakdown.push({ label: 'Materials', amount: mat })
+    return finish(labor + burden + mat, mPct)
   }
 
   // General / Other

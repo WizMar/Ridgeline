@@ -1,5 +1,5 @@
 export type JobStatus = 'Draft' | 'Scheduled' | 'In Progress' | 'Completed' | 'Invoiced'
-export type JobType = 'Roofing' | 'HVAC' | 'Plumbing' | 'Electrical' | 'Landscaping' | 'Painting' | 'General' | 'Other'
+export type JobType = 'Roofing' | 'HVAC' | 'Plumbing' | 'Electrical' | 'Landscaping' | 'Painting' | 'General' | 'Repair' | 'Other'
 export type ApprovalStatus = 'none' | 'requested' | 'approved'
 
 export type Job = {
@@ -26,10 +26,12 @@ export type Job = {
   approvalToken: string | null
   approvedAt: string | null
   approverName: string | null
+  clientId: string | null
+  propertyId: string | null
 }
 
 export const JOB_TYPES: JobType[] = [
-  'Roofing', 'HVAC', 'Plumbing', 'Electrical', 'Landscaping', 'Painting', 'General', 'Other',
+  'Roofing', 'HVAC', 'Plumbing', 'Electrical', 'Landscaping', 'Painting', 'General', 'Repair', 'Other',
 ]
 
 export const JOB_STATUSES: JobStatus[] = [

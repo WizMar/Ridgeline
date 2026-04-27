@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { description, pricingDefaults } = await req.json()
+    const { description, pricingDefaults, priceBookItems } = await req.json()
 
     if (!description?.trim()) {
       return new Response(
@@ -87,13 +87,17 @@ Notes:
 - Use realistic ${new Date().getFullYear()} contractor pricing for the region
 - Only include tradeCalc fields relevant to the detected trade`
 
+    const priceBookSection = priceBookItems?.length
+      ? `\n\nContractor's Price Book (prefer these items for lineItems — use the exact name, unit, and unitPrice):\n${priceBookItems.map((i: { name: string; category: string; unit: string; unitPrice: number }) => `- ${i.name} | ${i.category} | ${i.unit} @ $${i.unitPrice}`).join('\n')}`
+      : ''
+
     const userMessage = `Job description: ${description}${pricingDefaults ? `
 
 Contractor's default rates (use these for markup and burden unless overridden):
 - Markup: ${pricingDefaults.markupPct}%
 - Roofing labor: $${pricingDefaults.laborPerSq}/sq
 - Hourly rate: $${pricingDefaults.hourlyRate}/hr
-- Burden: ${pricingDefaults.burdenPct}%` : ''}
+- Burden: ${pricingDefaults.burdenPct}%` : ''}${priceBookSection}
 
 Return ONLY the JSON object, no markdown, no explanation.`
 

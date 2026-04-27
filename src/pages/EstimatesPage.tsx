@@ -92,6 +92,11 @@ function defaultTradeCalc(defaults: PricingDefaults): TradeCalc {
     prepWork: false,
     prepSurcharge: '',
     subcontractorCost: '',
+    repairLaborMethod: 'hourly',
+    numWorkers: '',
+    numDays: '',
+    dayRate: '',
+    flatLaborRate: '',
   }
 }
 
@@ -108,9 +113,11 @@ function newEstimate(num: string, defaults: PricingDefaults): Estimate {
     lineItems: [],
     notes: '',
     scope: '',
+    declineReason: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     convertedJobId: null,
+    jobId: null,
   }
 }
 
@@ -319,6 +326,8 @@ export default function EstimatesPage() {
       scheduledDate: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      clientId: null,
+      propertyId: null,
       approvalRequired: false,
       approvalStatus: 'none',
       approvalRequestedAt: null,

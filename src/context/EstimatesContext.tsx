@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/context/AuthContext'
 import type { Estimate, RoofCalc, TradeCalc, LineItem } from '@/types/estimate'
 
 type EstimatesContextType = {
@@ -30,42 +31,46 @@ function toEstimate(row: Record<string, unknown>): Estimate {
     lineItems: (row.line_items as LineItem[]) ?? [],
     notes: (row.notes as string) ?? '',
     scope: (row.scope as string) ?? '',
+    declineReason: (row.decline_reason as string) ?? '',
     convertedJobId: (row.converted_job_id as string) ?? null,
+    jobId: (row.job_id as string) ?? null,
     createdAt: (row.created_at as string) ?? '',
     updatedAt: (row.updated_at as string) ?? '',
   }
 }
 
-const ORG_ID = 'default-org'
-
 export function EstimatesProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!user?.org_id) { setLoading(false); return }
     supabase
       .from('estimates')
       .select('*')
-      .eq('org_id', ORG_ID)
+      .eq('org_id', user.org_id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (data) setEstimates(data.map(toEstimate))
         setLoading(false)
       })
-  }, [])
+  }, [user?.org_id])
 
   async function nextNumber(): Promise<string> {
+    if (!user?.org_id) return 'EST-0001'
     const { count } = await supabase
       .from('estimates')
       .select('*', { count: 'exact', head: true })
-      .eq('org_id', ORG_ID)
+      .eq('org_id', user.org_id)
     const next = (count ?? 0) + 1
     return `EST-${String(next).padStart(4, '0')}`
   }
 
   async function addEstimate(e: Omit<Estimate, 'id' | 'createdAt' | 'updatedAt'>) {
+    if (!user?.org_id) return
     const { data, error } = await supabase.from('estimates').insert({
-      org_id: ORG_ID,
+      org_id: user.org_id,
       estimate_number: e.estimateNumber,
       status: e.status,
       client_name: e.client.name,
@@ -79,6 +84,7 @@ export function EstimatesProvider({ children }: { children: React.ReactNode }) {
       notes: e.notes,
       scope: e.scope,
       converted_job_id: e.convertedJobId,
+      job_id: e.jobId ?? null,
     }).select().single()
     if (data && !error) setEstimates(prev => [toEstimate(data), ...prev])
   }
@@ -96,7 +102,9 @@ export function EstimatesProvider({ children }: { children: React.ReactNode }) {
       line_items: e.lineItems,
       notes: e.notes,
       scope: e.scope,
+      decline_reason: e.declineReason ?? null,
       converted_job_id: e.convertedJobId,
+      job_id: e.jobId ?? null,
       updated_at: new Date().toISOString(),
     }).eq('id', e.id)
     if (!error) setEstimates(prev => prev.map(x => x.id === e.id ? e : x))

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth, type Action } from '@/context/AuthContext'
-import { LayoutDashboard, Briefcase, FileText, Users, Clock, SlidersHorizontal, User, LogOut } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText } from 'lucide-react'
 
 type NavItem = {
   label: string
@@ -12,8 +12,9 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard',  path: '/dashboard', action: 'view:dashboard',      icon: <LayoutDashboard size={18} strokeWidth={1.5} /> },
+  { label: 'Clients',   path: '/clients',   action: 'view:clients',        icon: <Folder          size={18} strokeWidth={1.5} /> },
   { label: 'Jobs',       path: '/jobs',       action: 'view:jobs:assigned',  icon: <Briefcase       size={18} strokeWidth={1.5} /> },
-  { label: 'Estimates',  path: '/estimates',  action: 'view:estimates',      icon: <FileText        size={18} strokeWidth={1.5} /> },
+  { label: 'Estimates',  path: '/estimates',  action: 'manage:estimates',    icon: <FileText        size={18} strokeWidth={1.5} /> },
   { label: 'Employees',  path: '/employees',  action: 'view:employees',      icon: <Users           size={18} strokeWidth={1.5} /> },
   { label: 'Time Clock', path: '/timeclock',  action: 'view:timeclock',      icon: <Clock           size={18} strokeWidth={1.5} /> },
   { label: 'Settings',   path: '/settings',   action: 'manage:settings',     icon: <SlidersHorizontal size={18} strokeWidth={1.5} /> },

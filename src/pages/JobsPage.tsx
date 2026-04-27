@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useJobs } from '@/context/JobsContext'
 import { useEmployees } from '@/context/EmployeeContext'
 import { usePreferences, formatDate } from '@/context/PreferencesContext'
-import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,10 +17,8 @@ import {
   type Job, type JobStatus, type JobType,
   JOB_STATUSES, JOB_TYPES, STATUS_BADGE, STATUS_BORDER,
 } from '@/types/job'
-import { useSettings } from '@/context/SettingsContext'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { Briefcase, CheckCircle2, Send, Copy, Check, ShieldAlert } from 'lucide-react'
+import { Briefcase } from 'lucide-react'
 
 function newJob(): Job {
   return {
@@ -43,78 +41,21 @@ function newJob(): Job {
     approvalToken: null,
     approvedAt: null,
     approverName: null,
+    clientId: null,
+    propertyId: null,
   }
 }
 
-
-function streetViewUrl(address: string) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-}
-
 export default function JobsPage() {
-  const { jobs, addJob, updateJob, deleteJob, requestApproval } = useJobs()
+  const navigate = useNavigate()
+  const { jobs, addJob } = useJobs()
   const { employees } = useEmployees()
   const { prefs } = usePreferences()
-  const { user } = useAuth()
-  const { settings } = useSettings()
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<JobStatus | 'All'>('All')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [draft, setDraft] = useState<Job>(newJob())
-  const [selected, setSelected] = useState<Job | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [sendingApproval, setSendingApproval] = useState(false)
-  const [copied, setCopied] = useState(false)
-
-  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
-  const canRequestApproval = isAdmin || user?.role === 'Project Manager' || user?.role === 'Lead'
-
-  async function handleRequestApproval(job: Job) {
-    setSendingApproval(true)
-    const token = await requestApproval(job.id)
-    if (token) {
-      const updated = { ...job, approvalToken: token, approvalStatus: 'requested' as const, approvalRequestedAt: new Date().toISOString() }
-      setSelected(updated)
-
-      const approvalLink = `${window.location.origin}/approve/${token}`
-      const orgName = settings.company.name || 'Nexus'
-      const hasContact = !!(job.client.email || job.client.phone)
-
-      if (hasContact) {
-        toast.success(`Approval request sent to ${job.client.name || 'client'}`)
-        supabase.functions.invoke('send-approval-request', {
-          body: {
-            clientEmail: job.client.email,
-            clientPhone: job.client.phone,
-            clientName: job.client.name,
-            jobTitle: job.title,
-            approvalLink,
-            orgName,
-          },
-        })
-      } else {
-        toast.success('Approval link ready — no email or phone on file for this client')
-      }
-    } else {
-      toast.error('Failed to generate approval link')
-    }
-    setSendingApproval(false)
-  }
-
-  function handleCopyLink(token: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/approve/${token}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function toggleApprovalRequired(job: Job) {
-    const updated = { ...job, approvalRequired: !job.approvalRequired }
-    await updateJob(updated)
-    setSelected(updated)
-  }
 
   const leads = employees.filter(e => e.status === 'Active' && (e.role === 'Admin' || e.role === 'Sub-Admin' || e.role === 'Project Manager' || e.role === 'Lead' || e.role === 'Sales'))
   const crew = employees.filter(e => e.status === 'Active')
@@ -130,41 +71,14 @@ export default function JobsPage() {
 
   function openCreate() {
     setDraft(newJob())
-    setIsEditing(false)
     setDialogOpen(true)
-  }
-
-  function openEdit(job: Job) {
-    setDraft({ ...job })
-    setIsEditing(true)
-    setDetailOpen(false)
-    setDialogOpen(true)
-  }
-
-  function openDetail(job: Job) {
-    setSelected(job)
-    setDetailOpen(true)
   }
 
   function handleSave() {
     if (!draft.title.trim() || !draft.client.name.trim()) return
-    const updated = { ...draft, updatedAt: new Date().toISOString() }
-    if (isEditing) {
-      updateJob(updated)
-      setSelected(updated)
-      toast.success('Job updated')
-    } else {
-      addJob(updated)
-      toast.success('Job created')
-    }
+    addJob(draft)
+    toast.success('Job created')
     setDialogOpen(false)
-  }
-
-  function handleDelete(id: string) {
-    deleteJob(id)
-    setConfirmDelete(null)
-    setDetailOpen(false)
-    toast.success('Job deleted')
   }
 
   function toggleCrew(empId: string) {
@@ -242,7 +156,7 @@ export default function JobsPage() {
           {filtered.map(job => (
             <div
               key={job.id}
-              onClick={() => openDetail(job)}
+              onClick={() => navigate(`/jobs/${job.id}`)}
               className={`bg-zinc-900 border border-zinc-800 border-l-4 ${STATUS_BORDER[job.status]} rounded-lg overflow-hidden cursor-pointer hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors`}
             >
               {job.address && (
@@ -253,231 +167,39 @@ export default function JobsPage() {
                 />
               )}
               <div className="p-4">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="font-semibold text-white leading-tight line-clamp-1">{job.title}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_BADGE[job.status]}`}>
-                  {job.status}
-                </span>
-              </div>
-              <p className="text-zinc-300 text-sm">{job.client.name}</p>
-              <p className="text-zinc-500 text-xs mt-1 line-clamp-1">{job.address || 'No address'}</p>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
-                <span className="text-zinc-500 text-xs">{job.type}</span>
-                <div className="flex flex-col items-end gap-0.5">
-                  {job.leadId && (
-                    <span className="text-zinc-400 text-xs">Lead: {empName(job.leadId).split(' ')[0]}</span>
-                  )}
-                  {job.scheduledDate && (
-                    <span className="text-zinc-400 text-xs">{formatDate(job.scheduledDate, prefs.dateFormat)}</span>
-                  )}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="font-semibold text-white leading-tight line-clamp-1">{job.title}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_BADGE[job.status]}`}>
+                    {job.status}
+                  </span>
                 </div>
-              </div>
+                <p className="text-zinc-300 text-sm">{job.client.name}</p>
+                <p className="text-zinc-500 text-xs mt-1 line-clamp-1">{job.address || 'No address'}</p>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
+                  <span className="text-zinc-500 text-xs">{job.type}</span>
+                  <div className="flex flex-col items-end gap-0.5">
+                    {job.leadId && (
+                      <span className="text-zinc-400 text-xs">Lead: {empName(job.leadId).split(' ')[0]}</span>
+                    )}
+                    {job.scheduledDate && (
+                      <span className="text-zinc-400 text-xs">{formatDate(job.scheduledDate, prefs.dateFormat)}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selected && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center justify-between pr-4">
-                  <div>
-                    <DialogTitle className="text-white text-xl">{selected.title}</DialogTitle>
-                    <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${STATUS_BADGE[selected.status]}`}>
-                      {selected.status}
-                    </span>
-                  </div>
-                </div>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-2">
-                {/* Property Map */}
-                {selected.address && (
-                  <div className="rounded-lg overflow-hidden border border-zinc-700">
-                    <iframe
-                      src={`https://maps.google.com/maps?q=${encodeURIComponent(selected.address)}&layer=c&output=embed`}
-                      className="w-full border-0"
-                      style={{ height: 240 }}
-                      loading="lazy"
-                    />
-                    <a
-                      href={streetViewUrl(selected.address)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 text-xs text-stone-300 hover:text-stone-200 bg-zinc-800 transition-colors"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      Open in Google Maps
-                    </a>
-                  </div>
-                )}
-
-                {/* Client Info */}
-                <div className="bg-zinc-800 rounded-lg p-3 space-y-1">
-                  <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-2">Client</p>
-                  <p className="text-white font-medium">{selected.client.name}</p>
-                  {selected.client.phone && <p className="text-zinc-300 text-sm">{selected.client.phone}</p>}
-                  {selected.client.email && <p className="text-zinc-400 text-sm">{selected.client.email}</p>}
-                </div>
-
-                {/* Job Details */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Type</p>
-                    <p className="text-white text-sm">{selected.type}</p>
-                  </div>
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Scheduled</p>
-                    <p className="text-white text-sm">{selected.scheduledDate ? formatDate(selected.scheduledDate, prefs.dateFormat) : '—'}</p>
-                  </div>
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Lead</p>
-                    <p className="text-white text-sm">{empName(selected.leadId)}</p>
-                  </div>
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Crew</p>
-                    <p className="text-white text-sm">
-                      {selected.crewIds.length === 0
-                        ? '—'
-                        : selected.crewIds.map(id => empName(id).split(' ')[0]).join(', ')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Scope */}
-                {selected.scope && (
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Scope of Work</p>
-                    <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.scope}</p>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {selected.notes && (
-                  <div className="bg-zinc-800 rounded-lg p-3">
-                    <p className="text-zinc-400 text-xs mb-1">Notes</p>
-                    <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
-                  </div>
-                )}
-
-                {/* Customer Approval — visible on Completed jobs */}
-                {selected.status === 'Completed' && (
-                  <div className="bg-zinc-800 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-zinc-300 text-xs font-semibold uppercase tracking-wide">Customer Approval</p>
-                      {/* Admin-only: toggle required */}
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => toggleApprovalRequired(selected)}
-                          className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                            selected.approvalRequired
-                              ? 'bg-stone-800/40 border-stone-500 text-stone-200'
-                              : 'border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:text-zinc-300'
-                          }`}
-                        >
-                          <ShieldAlert size={11} />
-                          {selected.approvalRequired ? 'Required' : 'Require sign-off'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Required but not yet approved — warning banner */}
-                    {selected.approvalRequired && selected.approvalStatus !== 'approved' && (
-                      <div className="flex items-center gap-2 bg-stone-800/20 border border-amber-800 rounded-md px-3 py-2">
-                        <ShieldAlert size={13} className="text-stone-300 shrink-0" />
-                        <p className="text-stone-200 text-xs">This job requires customer sign-off before it can be invoiced.</p>
-                      </div>
-                    )}
-
-                    {/* Approved state */}
-                    {selected.approvalStatus === 'approved' && (
-                      <div className="flex items-center gap-2 bg-green-900/20 border border-green-800 rounded-md px-3 py-2">
-                        <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-                        <div>
-                          <p className="text-green-300 text-xs font-medium">Approved by {selected.approverName}</p>
-                          {selected.approvedAt && (
-                            <p className="text-green-600 text-xs">{new Date(selected.approvedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Requested — show copy link */}
-                    {selected.approvalStatus === 'requested' && selected.approvalToken && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
-                          <Send size={12} className="text-blue-400 shrink-0" />
-                          <p className="text-blue-300 text-xs">
-                            Request sent{selected.approvalRequestedAt ? ` · ${new Date(selected.approvalRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyLink(selected.approvalToken!)}
-                          className="w-full flex items-center justify-between gap-2 bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors"
-                        >
-                          <span className="truncate font-mono">{`${window.location.origin}/approve/${selected.approvalToken}`}</span>
-                          <span className="shrink-0 flex items-center gap-1">
-                            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                            {copied ? 'Copied!' : 'Copy'}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-
-                    {/* None state — show send button for eligible roles */}
-                    {selected.approvalStatus === 'none' && canRequestApproval && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={sendingApproval}
-                        onClick={() => handleRequestApproval(selected)}
-                        className="border-zinc-600 text-zinc-300 hover:bg-zinc-700 gap-1.5"
-                      >
-                        <Send size={13} />
-                        {sendingApproval ? 'Generating…' : 'Request Customer Approval'}
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter className="flex gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  className="border-red-700 text-red-400 hover:bg-red-900/30 hover:text-red-300"
-                  onClick={() => setConfirmDelete(selected.id)}
-                >
-                  Delete
-                </Button>
-                <Button
-                  className="bg-stone-500 hover:bg-stone-400 text-white"
-                  onClick={() => openEdit(selected)}
-                >
-                  Edit Job
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Create / Edit Dialog */}
+      {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">{isEditing ? 'Edit Job' : 'New Job'}</DialogTitle>
+            <DialogTitle className="text-white">New Job</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-5 mt-2">
-            {/* Title */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Job Title *</Label>
               <Input
@@ -488,7 +210,6 @@ export default function JobsPage() {
               />
             </div>
 
-            {/* Status + Type */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-zinc-300">Status</Label>
@@ -497,14 +218,7 @@ export default function JobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    {JOB_STATUSES.map(s => {
-                      const blocked = s === 'Invoiced' && draft.approvalRequired && draft.approvalStatus !== 'approved'
-                      return (
-                        <SelectItem key={s} value={s} disabled={blocked}>
-                          {s}{blocked ? ' — requires approval' : ''}
-                        </SelectItem>
-                      )
-                    })}
+                    {JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -515,15 +229,12 @@ export default function JobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    {JOB_TYPES.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
+                    {JOB_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Scheduled Date */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Scheduled Date</Label>
               <Input
@@ -534,7 +245,6 @@ export default function JobsPage() {
               />
             </div>
 
-            {/* Client Info */}
             <div>
               <p className="text-zinc-400 text-xs font-medium uppercase tracking-wide mb-3">Client Information</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -568,7 +278,6 @@ export default function JobsPage() {
               </div>
             </div>
 
-            {/* Address */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Property Address</Label>
               <Input
@@ -579,7 +288,6 @@ export default function JobsPage() {
               />
             </div>
 
-            {/* Lead */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Assign Lead</Label>
               <Select
@@ -598,7 +306,6 @@ export default function JobsPage() {
               </Select>
             </div>
 
-            {/* Crew */}
             {crew.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-zinc-300">Assign Crew</Label>
@@ -610,7 +317,7 @@ export default function JobsPage() {
                       onClick={() => toggleCrew(e.id)}
                       className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
                         draft.crewIds.includes(e.id)
-                          ? 'border-stone-500 bg-stone-800/30 text-stone-200'
+                          ? 'border-stone-500 bg-stone-500 text-white'
                           : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
                       }`}
                     >
@@ -621,7 +328,6 @@ export default function JobsPage() {
               </div>
             )}
 
-            {/* Scope of Work */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Scope of Work</Label>
               <textarea
@@ -633,7 +339,6 @@ export default function JobsPage() {
               />
             </div>
 
-            {/* Notes */}
             <div className="space-y-1.5">
               <Label className="text-zinc-300">Internal Notes</Label>
               <textarea
@@ -644,7 +349,6 @@ export default function JobsPage() {
                 className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-stone-500"
               />
             </div>
-
           </div>
 
           <DialogFooter className="mt-6">
@@ -656,23 +360,7 @@ export default function JobsPage() {
               onClick={handleSave}
               disabled={!draft.title.trim() || !draft.client.name.trim()}
             >
-              {isEditing ? 'Save Changes' : 'Create Job'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirm */}
-      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">Delete Job?</DialogTitle>
-          </DialogHeader>
-          <p className="text-zinc-400 text-sm">This action cannot be undone.</p>
-          <DialogFooter className="mt-4">
-            <Button variant="ghost" className="text-zinc-400" onClick={() => setConfirmDelete(null)}>Cancel</Button>
-            <Button className="bg-red-700 hover:bg-red-600 text-white" onClick={() => handleDelete(confirmDelete!)}>
-              Delete
+              Create Job
             </Button>
           </DialogFooter>
         </DialogContent>
