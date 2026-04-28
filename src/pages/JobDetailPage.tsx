@@ -225,7 +225,7 @@ export default function JobDetailPage() {
           )}
 
           {/* Lead + Crew */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
               <p className="text-zinc-500 text-xs mb-1">Lead</p>
               <p className="text-white text-sm">{empName(job.leadId)}</p>
@@ -418,7 +418,7 @@ export default function JobDetailPage() {
                 <Input value={draft.title} onChange={e => setDraft(d => d && ({ ...d, title: e.target.value }))}
                   className="bg-zinc-800 border-zinc-700 text-white" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-zinc-300">Status</Label>
                   <Select value={draft.status} onValueChange={v => setDraft(d => d && ({ ...d, status: v as JobStatus }))}>
@@ -459,7 +459,7 @@ export default function JobDetailPage() {
               {crew.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-zinc-300">Assign Crew</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {crew.map(e => (
                       <button key={e.id} type="button" onClick={() => toggleCrew(e.id)}
                         className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors ${

@@ -957,7 +957,7 @@ function PriceBookSection({ onBack }: { onBack: () => void }) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Label className="text-zinc-300 text-xs mb-1.5 block">Name *</Label>
                 <Input

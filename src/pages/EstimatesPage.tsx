@@ -377,7 +377,7 @@ export default function EstimatesPage() {
     return (
       <div className={sectionCls}>
         <p className={sectionLabelCls}>Pricing — Pick Your Method</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Sell Price card */}
           <div
             onClick={() => onMethod('sellPrice')}
@@ -807,7 +807,7 @@ export default function EstimatesPage() {
                     {/* Job Parameters */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Job Parameters</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Roof Area (sq ft)</Label>
                           <Input type="number" value={rc.squares}
@@ -871,7 +871,7 @@ export default function EstimatesPage() {
                     {/* Materials */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Materials</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Material Cost / Square <span className="text-zinc-600">(100 sq ft)</span></Label>
                           <Input type="number" value={rc.materialPerSq}
@@ -903,7 +903,7 @@ export default function EstimatesPage() {
                       </div>
 
                       {rc.laborMethod === 'perSq' && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-zinc-300 text-xs">Labor / Square <span className="text-zinc-600">(100 sq ft)</span></Label>
                             <Input type="number" value={rc.laborPerSq}
@@ -918,7 +918,7 @@ export default function EstimatesPage() {
                       )}
 
                       {rc.laborMethod === 'dayRate' && (
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-zinc-300 text-xs"># Days</Label>
                             <Input type="number" value={rc.numDays}
@@ -939,7 +939,7 @@ export default function EstimatesPage() {
                       )}
 
                       {rc.laborMethod === 'hourly' && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-1.5">
                             <Label className="text-zinc-300 text-xs"># Workers</Label>
                             <Input type="number" value={rc.numWorkers}
@@ -986,7 +986,7 @@ export default function EstimatesPage() {
                     {/* Additional Line Items (roofing-specific fixed fields) */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Additional Line Items</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Permit Fee $</Label>
                           <Input type="number" value={rc.permitFee}
@@ -1000,7 +1000,7 @@ export default function EstimatesPage() {
                             placeholder="0" className={inputCls} />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Decking — # Sheets</Label>
                           <Input type="number" value={rc.deckingSheets}
@@ -1014,7 +1014,7 @@ export default function EstimatesPage() {
                             placeholder="0" className={inputCls} />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Drip Edge / Flashing (LF)</Label>
                           <Input type="number" value={rc.dripEdgeLF}
@@ -1060,7 +1060,7 @@ export default function EstimatesPage() {
                     {/* Equipment */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Equipment</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Equipment Cost</Label>
                           <Input type="number" value={tc.equipmentCost}
@@ -1077,7 +1077,7 @@ export default function EstimatesPage() {
                     {/* Ductwork */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Ductwork</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">LF</Label>
                           <Input type="number" value={tc.ductworkLF}
@@ -1100,7 +1100,7 @@ export default function EstimatesPage() {
                     {/* Labor */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
@@ -1185,7 +1185,7 @@ export default function EstimatesPage() {
                     {/* Fixtures */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Fixtures</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs"># Fixtures</Label>
                           <Input type="number" value={tc.numFixtures}
@@ -1208,7 +1208,7 @@ export default function EstimatesPage() {
                     {/* Labor */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Extra Hours</Label>
                           <Input type="number" value={tc.laborHours}
@@ -1291,7 +1291,7 @@ export default function EstimatesPage() {
                         onChange={v => setTC({ electricalMethod: v })}
                       />
                       {tc.electricalMethod === 'sqft' && (
-                        <div className="grid grid-cols-3 gap-3 mt-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
                           <div className="space-y-1.5">
                             <Label className="text-zinc-300 text-xs">Sq Ft</Label>
                             <Input type="number" value={tc.sqFt}
@@ -1311,7 +1311,7 @@ export default function EstimatesPage() {
                         </div>
                       )}
                       {tc.electricalMethod === 'hours' && (
-                        <div className="grid grid-cols-3 gap-3 mt-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
                           <div className="space-y-1.5">
                             <Label className="text-zinc-300 text-xs">Hours</Label>
                             <Input type="number" value={tc.laborHours}
@@ -1335,7 +1335,7 @@ export default function EstimatesPage() {
                     {/* Labor Burden */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor Burden</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">
                             Burden %
@@ -1390,7 +1390,7 @@ export default function EstimatesPage() {
                     {/* Area Work */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Area Work</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Sq Ft</Label>
                           <Input type="number" value={tc.areaSqFt}
@@ -1413,7 +1413,7 @@ export default function EstimatesPage() {
                     {/* Labor */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
@@ -1451,7 +1451,7 @@ export default function EstimatesPage() {
                     {/* Bulk Materials */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Bulk Materials</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Cubic Yards</Label>
                           <Input type="number" value={tc.cubicYards}
@@ -1526,7 +1526,7 @@ export default function EstimatesPage() {
                     {/* Area */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Area</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Paintable Sq Ft</Label>
                           <Input type="number" value={tc.paintableSqFt}
@@ -1554,7 +1554,7 @@ export default function EstimatesPage() {
                     {/* Labor */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Hourly Rate</Label>
                           <Input type="number" value={tc.hourlyRate}
@@ -1640,7 +1640,7 @@ export default function EstimatesPage() {
                     {/* Labor */}
                     <div className={sectionCls}>
                       <p className={sectionLabelCls}>Labor</p>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-zinc-300 text-xs">Hours</Label>
                           <Input type="number" value={tc.laborHours}
