@@ -74,21 +74,22 @@ export function useMessages(target: MessageTarget | null) {
       setLoading(false)
     })
 
-    const filter = target === 'org'
-      ? `org_id=eq.${user.org_id}`
-      : `channel_id=eq.${target}`
-
     const channel = supabase
       .channel(`msgs:${target}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter,
       }, async payload => {
         if (targetRef.current !== target) return
         const row = payload.new as Record<string, unknown>
-        if (target === 'org' && row.channel_id !== null) return
+        // Filter client-side — server-side filter can silently fail with RLS
+        if (target === 'org') {
+          if (row.channel_id !== null) return
+          if (row.org_id !== user.org_id) return
+        } else {
+          if (row.channel_id !== target) return
+        }
         const { data } = await supabase.from('profiles').select('name').eq('id', row.sender_id).single()
         const msg = toMessage({ ...row, sender_name: data?.name ?? 'Unknown' })
         // Replace any matching optimistic message (same sender + content), else append
