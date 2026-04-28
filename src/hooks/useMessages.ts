@@ -127,7 +127,10 @@ export function useMessages(target: MessageTarget | null) {
   }, [user?.org_id, target])
 
   const sendMessage = useCallback(async (content: string): Promise<boolean> => {
-    if (!user?.org_id || !user?.id || !content.trim() || !target) return false
+    if (!user?.org_id || !user?.id || !content.trim() || !target) {
+      toast.error(`Cannot send: org=${user?.org_id} user=${user?.id} target=${target}`)
+      return false
+    }
     setSending(true)
     const { error } = await supabase.from('messages').insert({
       org_id: user.org_id,
