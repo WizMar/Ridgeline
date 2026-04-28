@@ -88,7 +88,18 @@ export function useMessages(target: MessageTarget | null) {
         if (target === 'org' && row.channel_id !== null) return
         const { data } = await supabase.from('profiles').select('name').eq('id', row.sender_id).single()
         const msg = toMessage({ ...row, sender_name: data?.name ?? 'Unknown' })
-        setMessages(prev => [...prev, msg])
+        // Replace any matching optimistic message (same sender + content), else append
+        setMessages(prev => {
+          const tempIdx = prev.findIndex(m =>
+            m.id.startsWith('temp-') && m.senderId === msg.senderId && m.content === msg.content
+          )
+          if (tempIdx !== -1) {
+            const next = [...prev]
+            next[tempIdx] = msg
+            return next
+          }
+          return [...prev, msg]
+        })
       })
       .subscribe()
 
@@ -127,11 +138,22 @@ export function useMessages(target: MessageTarget | null) {
   }, [user?.org_id, target])
 
   const sendMessage = useCallback(async (content: string): Promise<boolean> => {
-    if (!user?.org_id || !user?.id || !content.trim() || !target) {
-      toast.error(`Cannot send: org=${user?.org_id} user=${user?.id} target=${target}`)
-      return false
-    }
+    if (!user?.org_id || !user?.id || !content.trim() || !target) return false
     setSending(true)
+
+    // Optimistic update — show message immediately without waiting for Realtime
+    const tempId = `temp-${Date.now()}`
+    const optimistic: Message = {
+      id: tempId,
+      orgId: user.org_id,
+      senderId: user.id,
+      senderName: user.name,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+      channelId: target === 'org' ? null : target,
+    }
+    setMessages(prev => [...prev, optimistic])
+
     const { error } = await supabase.from('messages').insert({
       org_id: user.org_id,
       sender_id: user.id,
@@ -139,7 +161,11 @@ export function useMessages(target: MessageTarget | null) {
       channel_id: target === 'org' ? null : target,
     })
     setSending(false)
-    if (error) { toast.error(`Failed to send: ${error.message}`); return false }
+    if (error) {
+      setMessages(prev => prev.filter(m => m.id !== tempId))
+      toast.error(`Failed to send: ${error.message}`)
+      return false
+    }
     return true
   }, [user, target])
 
