@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
 
 export type Message = {
   id: string
@@ -135,7 +136,8 @@ export function useMessages(target: MessageTarget | null) {
       channel_id: target === 'org' ? null : target,
     })
     setSending(false)
-    return !error
+    if (error) { toast.error(`Failed to send: ${error.message}`); return false }
+    return true
   }, [user, target])
 
   return { messages, loading, sending, hasMore, loadOlder, sendMessage }
