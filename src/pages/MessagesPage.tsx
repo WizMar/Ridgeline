@@ -223,9 +223,12 @@ export default function MessagesPage() {
   const [creating, setCreating] = useState(false)
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null)
   const channelLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const channelLongPressActivated = useRef(false)
 
   function startChannelLongPress(chId: string) {
+    channelLongPressActivated.current = false
     channelLongPressTimer.current = setTimeout(() => {
+      channelLongPressActivated.current = true
       setSelectedChannelId(chId)
       navigator.vibrate?.(50)
     }, 500)
@@ -235,6 +238,15 @@ export default function MessagesPage() {
     if (channelLongPressTimer.current) {
       clearTimeout(channelLongPressTimer.current)
       channelLongPressTimer.current = null
+    }
+  }
+
+  function handleChannelTouchEnd(e: React.TouchEvent) {
+    cancelChannelLongPress()
+    if (channelLongPressActivated.current) {
+      // Prevent the synthetic click so the action sheet doesn't dismiss itself immediately
+      e.preventDefault()
+      channelLongPressActivated.current = false
     }
   }
 
@@ -348,9 +360,10 @@ export default function MessagesPage() {
             return (
               <div key={ch.id}
                 className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer select-none ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
-                onClick={() => selectTarget(ch.id, ch)}
-                onTouchStart={e => { e.preventDefault(); startChannelLongPress(ch.id) }}
-                onTouchEnd={cancelChannelLongPress}
+                style={{ WebkitTouchCallout: 'none' } as React.CSSProperties}
+                onClick={() => { if (!channelLongPressActivated.current) selectTarget(ch.id, ch) }}
+                onTouchStart={() => startChannelLongPress(ch.id)}
+                onTouchEnd={handleChannelTouchEnd}
                 onTouchMove={cancelChannelLongPress}
                 onContextMenu={e => { e.preventDefault(); setSelectedChannelId(ch.id) }}
               >
@@ -380,9 +393,10 @@ export default function MessagesPage() {
             return (
               <div key={ch.id}
                 className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer select-none ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
-                onClick={() => selectTarget(ch.id, ch)}
-                onTouchStart={e => { e.preventDefault(); startChannelLongPress(ch.id) }}
-                onTouchEnd={cancelChannelLongPress}
+                style={{ WebkitTouchCallout: 'none' } as React.CSSProperties}
+                onClick={() => { if (!channelLongPressActivated.current) selectTarget(ch.id, ch) }}
+                onTouchStart={() => startChannelLongPress(ch.id)}
+                onTouchEnd={handleChannelTouchEnd}
                 onTouchMove={cancelChannelLongPress}
                 onContextMenu={e => { e.preventDefault(); setSelectedChannelId(ch.id) }}
               >
