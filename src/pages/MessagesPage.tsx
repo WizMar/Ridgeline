@@ -347,9 +347,9 @@ export default function MessagesPage() {
             const color = getAvatarColor(name)
             return (
               <div key={ch.id}
-                className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
+                className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer select-none ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
                 onClick={() => selectTarget(ch.id, ch)}
-                onTouchStart={() => startChannelLongPress(ch.id)}
+                onTouchStart={e => { e.preventDefault(); startChannelLongPress(ch.id) }}
                 onTouchEnd={cancelChannelLongPress}
                 onTouchMove={cancelChannelLongPress}
                 onContextMenu={e => { e.preventDefault(); setSelectedChannelId(ch.id) }}
@@ -379,9 +379,9 @@ export default function MessagesPage() {
             const memberNames = ch.members.filter(m => m.userId !== myId).map(m => m.name.split(' ')[0]).join(', ')
             return (
               <div key={ch.id}
-                className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
+                className={`group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer select-none ${activeTarget === ch.id ? 'bg-zinc-800' : 'hover:bg-zinc-800/50'}`}
                 onClick={() => selectTarget(ch.id, ch)}
-                onTouchStart={() => startChannelLongPress(ch.id)}
+                onTouchStart={e => { e.preventDefault(); startChannelLongPress(ch.id) }}
                 onTouchEnd={cancelChannelLongPress}
                 onTouchMove={cancelChannelLongPress}
                 onContextMenu={e => { e.preventDefault(); setSelectedChannelId(ch.id) }}
