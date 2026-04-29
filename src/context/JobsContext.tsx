@@ -6,7 +6,7 @@ import type { Job } from '@/types/job'
 type JobsContextType = {
   jobs: Job[]
   loading: boolean
-  addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
+  addJob: (job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>
   updateJob: (job: Job) => Promise<void>
   deleteJob: (id: string) => Promise<void>
   requestApproval: (jobId: string) => Promise<string | null>
@@ -66,8 +66,8 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       })
   }, [user?.org_id])
 
-  async function addJob(job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) {
-    if (!user?.org_id) return
+  async function addJob(job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+    if (!user?.org_id) return false
     const { data, error } = await supabase.from('jobs').insert({
       org_id: user.org_id,
       title: job.title,
@@ -81,11 +81,12 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       crew_ids: job.crewIds,
       notes: job.notes,
       scope: job.scope,
-      scheduled_date: job.scheduledDate,
+      scheduled_date: job.scheduledDate || null,
       client_id: job.clientId || null,
       property_id: job.propertyId || null,
     }).select().single()
-    if (data && !error) setJobs(prev => [toJob(data), ...prev])
+    if (data && !error) { setJobs(prev => [toJob(data), ...prev]); return true }
+    return false
   }
 
   async function updateJob(job: Job) {
@@ -101,7 +102,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       crew_ids: job.crewIds,
       notes: job.notes,
       scope: job.scope,
-      scheduled_date: job.scheduledDate,
+      scheduled_date: job.scheduledDate || null,
       approval_required: job.approvalRequired,
       approval_status: job.approvalStatus,
       approval_requested_at: job.approvalRequestedAt,

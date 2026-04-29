@@ -949,7 +949,7 @@ function PriceBookSection({ onBack }: { onBack: () => void }) {
 
       {/* Add / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Item' : 'Add Item'}</DialogTitle>
             <DialogDescription className="text-zinc-400">
@@ -1017,7 +1017,7 @@ function PriceBookSection({ onBack }: { onBack: () => void }) {
 
       {/* Import preview dialog */}
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-xl">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Import Preview</DialogTitle>
             <DialogDescription className="text-zinc-400">

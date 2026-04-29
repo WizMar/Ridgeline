@@ -89,7 +89,13 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       notes: updated.notes,
       profile_picture: updated.profilePicture,
     }).eq('id', updated.id)
-    if (!error) setEmployees(prev => prev.map(e => e.id === updated.id ? updated : e))
+    if (!error) {
+      setEmployees(prev => prev.map(e => e.id === updated.id ? updated : e))
+      // Sync role to profiles so auth permissions update immediately
+      if (updated.email) {
+        await supabase.rpc('update_member_role', { p_email: updated.email, p_role: updated.role })
+      }
+    }
   }
 
   async function deleteEmployee(id: string) {

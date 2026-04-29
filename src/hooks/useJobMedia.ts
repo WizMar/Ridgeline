@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
 
 export type MediaCategory = 'before' | 'during' | 'damage' | 'after'
 export type MediaType = 'photo' | 'video'
@@ -54,13 +55,14 @@ export function useJobMedia(jobId: string | null) {
   const uploadMedia = useCallback(async (files: FileList, category: MediaCategory) => {
     if (!jobId || !user?.org_id || !user?.id) return
     setUploading(true)
+    let anyFailed = false
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
       const storagePath = `${user.org_id}/${jobId}/${category}/${Date.now()}-${crypto.randomUUID()}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('job-media')
         .upload(storagePath, file, { upsert: false })
-      if (uploadError) continue
+      if (uploadError) { anyFailed = true; continue }
       const { data: { publicUrl } } = supabase.storage.from('job-media').getPublicUrl(storagePath)
       const type: MediaType = file.type.startsWith('video/') ? 'video' : 'photo'
       const { data, error } = await supabase
@@ -77,7 +79,9 @@ export function useJobMedia(jobId: string | null) {
         .select()
         .single()
       if (data && !error) setMedia(prev => [...prev, toJobMedia(data)])
+      else anyFailed = true
     }
+    if (anyFailed) toast.error('Some files failed to upload. Check that the storage bucket exists in Supabase.')
     setUploading(false)
   }, [jobId, user])
 

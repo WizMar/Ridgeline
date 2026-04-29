@@ -118,6 +118,12 @@ export type TradeCalc = {
   numDays: string
   dayRate: string
   flatLaborRate: string
+
+  // Repair additional fees (serviceCallFee reused from Plumbing above)
+  emergencySurcharge: string  // after-hours / emergency premium
+  permitFee: string           // repair permit
+  equipmentRental: string     // scaffold, lift, special tools
+  disposalFee: string         // haul away / dump fee
 }
 
 export type Estimate = {
@@ -355,11 +361,24 @@ export function calcEstimateTotal(e: Estimate): EstimateTotals {
     }
     const { labor, burden } = withBurden(laborBase, burdenPct)
     const mat = parseFloat(e.tradeCalc.materialCost) || 0
+    const serviceCall = parseFloat(e.tradeCalc.serviceCallFee) || 0
+    const emergency = parseFloat(e.tradeCalc.emergencySurcharge) || 0
+    const permit = parseFloat(e.tradeCalc.permitFee) || 0
+    const equipment = parseFloat(e.tradeCalc.equipmentRental) || 0
+    const disposal = parseFloat(e.tradeCalc.disposalFee) || 0
+    const sub = parseFloat(e.tradeCalc.subcontractorCost) || 0
     const mPct = parseFloat(e.tradeCalc.markupPct) || 0
     if (labor > 0) breakdown.push({ label: 'Labor', amount: labor })
     if (burden > 0) breakdown.push({ label: `Labor Burden (${burdenPct}%)`, amount: burden })
     if (mat > 0) breakdown.push({ label: 'Materials', amount: mat })
-    return finish(labor + burden + mat, mPct)
+    if (serviceCall > 0) breakdown.push({ label: 'Service / Trip Charge', amount: serviceCall })
+    if (emergency > 0) breakdown.push({ label: 'Emergency / After-hours', amount: emergency })
+    if (permit > 0) breakdown.push({ label: 'Permit Fee', amount: permit })
+    if (equipment > 0) breakdown.push({ label: 'Equipment Rental', amount: equipment })
+    if (disposal > 0) breakdown.push({ label: 'Disposal / Haul Away', amount: disposal })
+    if (sub > 0) breakdown.push({ label: 'Subcontractors', amount: sub })
+    const coreCost = labor + burden + mat + serviceCall + emergency + permit + equipment + disposal + sub
+    return finish(coreCost, mPct)
   }
 
   // General / Other

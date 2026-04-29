@@ -183,5 +183,15 @@ export function useChannels() {
     return newChannel
   }, [user])
 
-  return { channels, loading, orgMembers, findOrCreateDM, createGroup }
+  const deleteChannel = useCallback(async (channelId: string): Promise<boolean> => {
+    const { error } = await supabase.from('channels').delete().eq('id', channelId)
+    if (!error) {
+      setChannels(prev => prev.filter(c => c.id !== channelId))
+    } else {
+      toast.error('Failed to delete conversation')
+    }
+    return !error
+  }, [])
+
+  return { channels, loading, orgMembers, findOrCreateDM, createGroup, deleteChannel }
 }

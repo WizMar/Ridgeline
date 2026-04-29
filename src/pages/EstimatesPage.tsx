@@ -97,6 +97,10 @@ function defaultTradeCalc(defaults: PricingDefaults): TradeCalc {
     numDays: '',
     dayRate: '',
     flatLaborRate: '',
+    emergencySurcharge: '',
+    permitFee: '',
+    equipmentRental: '',
+    disposalFee: '',
   }
 }
 
@@ -134,6 +138,76 @@ const inputCls = 'bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-5
 const readOnlyCls = 'bg-zinc-900/50 border border-zinc-700 rounded-md px-3 py-2 text-zinc-300 text-sm min-h-[38px] flex items-center'
 const sectionCls = 'bg-zinc-800 rounded-lg p-4 space-y-3'
 const sectionLabelCls = 'text-zinc-400 text-xs font-medium uppercase tracking-widest'
+
+function PricingCards({
+  method, markup, onMethod, onMarkup,
+  sellLabel, sellValue, onSell,
+  subtotal,
+}: {
+  method: 'markup' | 'sellPrice'
+  markup: string
+  onMethod: (m: 'markup' | 'sellPrice') => void
+  onMarkup: (v: string) => void
+  sellLabel: string
+  sellValue: string
+  onSell: (v: string) => void
+  subtotal: number
+}) {
+  const mPct = parseFloat(markup) || 0
+  const grossMargin = subtotal > 0 && mPct > 0
+    ? ((subtotal * mPct / 100) / (subtotal * (1 + mPct / 100))) * 100
+    : 0
+
+  return (
+    <div className={sectionCls}>
+      <p className={sectionLabelCls}>Pricing — Pick Your Method</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Sell Price card */}
+        <div
+          onClick={() => onMethod('sellPrice')}
+          className={`rounded-lg p-3 cursor-pointer transition-all ${
+            method === 'sellPrice'
+              ? 'border-2 border-orange-500 bg-orange-900/20'
+              : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
+          }`}
+        >
+          <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">{sellLabel}</p>
+          <Input
+            type="number"
+            value={sellValue}
+            onChange={e => { onMethod('sellPrice'); onSell(e.target.value) }}
+            placeholder="0"
+            className={`${inputCls} h-8 text-sm`}
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+        {/* Markup card */}
+        <div
+          onClick={() => onMethod('markup')}
+          className={`rounded-lg p-3 cursor-pointer transition-all ${
+            method === 'markup'
+              ? 'border-2 border-stone-400 bg-stone-800/20'
+              : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
+          }`}
+        >
+          <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">Markup on Cost</p>
+          <Input
+            type="number"
+            value={markup}
+            onChange={e => { onMethod('markup'); onMarkup(e.target.value) }}
+            placeholder="30"
+            className={`${inputCls} h-8 text-sm`}
+            onClick={e => e.stopPropagation()}
+          />
+          {method === 'markup' && mPct > 0 && subtotal > 0 && (
+            <p className="text-zinc-500 text-xs mt-1">— {grossMargin.toFixed(1)}% gross margin</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 function BtnGroup<T extends string>({
   options, value, onChange, className,
@@ -210,6 +284,18 @@ export default function EstimatesPage() {
     acc[s] = estimates.filter(e => e.status === s).length
     return acc
   }, {} as Record<EstimateStatus, number>)
+
+  const estimateGroups = Object.entries(
+    filtered.reduce((acc, est) => {
+      const key = est.address?.trim() || est.client.name || 'No Address'
+      if (!acc[key]) acc[key] = []
+      acc[key].push(est)
+      return acc
+    }, {} as Record<string, typeof filtered>)
+  ).sort(([, a], [, b]) => {
+    const latest = (arr: typeof filtered) => Math.max(...arr.map(e => new Date(e.createdAt).getTime()))
+    return latest(b) - latest(a)
+  })
 
   async function openCreate() {
     const num = await nextNumber()
@@ -305,7 +391,7 @@ export default function EstimatesPage() {
     toast.success('Estimate deleted')
   }
 
-  function handleConvert(estimate: Estimate) {
+  async function handleConvert(estimate: Estimate) {
     const leads = employees.filter(e =>
       e.status === 'Active' &&
       (e.role === 'Admin' || e.role === 'Sub-Admin' || e.role === 'Project Manager' || e.role === 'Sales')
@@ -335,7 +421,8 @@ export default function EstimatesPage() {
       approvedAt: null,
       approverName: null,
     }
-    addJob(job)
+    const ok = await addJob(job)
+    if (!ok) { toast.error('Failed to convert to job.'); return }
     const updated = { ...estimate, convertedJobId: job.id, updatedAt: new Date().toISOString() }
     updateEstimate(updated)
     setSelected(updated)
@@ -354,83 +441,14 @@ export default function EstimatesPage() {
 
 
 
-  // ── Pricing dual-card picker ───────────────────────────────────────────────
-  function PricingCards({
-    method, markup, onMethod, onMarkup,
-    sellLabel, sellValue, onSell,
-    subtotal,
-  }: {
-    method: 'markup' | 'sellPrice'
-    markup: string
-    onMethod: (m: 'markup' | 'sellPrice') => void
-    onMarkup: (v: string) => void
-    sellLabel: string
-    sellValue: string
-    onSell: (v: string) => void
-    subtotal: number
-  }) {
-    const mPct = parseFloat(markup) || 0
-    const grossMargin = subtotal > 0 && mPct > 0
-      ? ((subtotal * mPct / 100) / (subtotal * (1 + mPct / 100))) * 100
-      : 0
-
-    return (
-      <div className={sectionCls}>
-        <p className={sectionLabelCls}>Pricing — Pick Your Method</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Sell Price card */}
-          <div
-            onClick={() => onMethod('sellPrice')}
-            className={`rounded-lg p-3 cursor-pointer transition-all ${
-              method === 'sellPrice'
-                ? 'border-2 border-orange-500 bg-orange-900/20'
-                : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
-            }`}
-          >
-            <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">{sellLabel}</p>
-            <Input
-              type="number"
-              value={sellValue}
-              onChange={e => { onMethod('sellPrice'); onSell(e.target.value) }}
-              placeholder="0"
-              className={`${inputCls} h-8 text-sm`}
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
-          {/* Markup card */}
-          <div
-            onClick={() => onMethod('markup')}
-            className={`rounded-lg p-3 cursor-pointer transition-all ${
-              method === 'markup'
-                ? 'border-2 border-stone-400 bg-stone-800/20'
-                : 'border border-zinc-700 bg-zinc-900/30 opacity-60'
-            }`}
-          >
-            <p className="text-zinc-300 text-xs font-medium uppercase tracking-wide mb-2">Markup on Cost</p>
-            <Input
-              type="number"
-              value={markup}
-              onChange={e => { onMethod('markup'); onMarkup(e.target.value) }}
-              placeholder="30"
-              className={`${inputCls} h-8 text-sm`}
-              onClick={e => e.stopPropagation()}
-            />
-            {method === 'markup' && mPct > 0 && subtotal > 0 && (
-              <p className="text-zinc-500 text-xs mt-1">— {grossMargin.toFixed(1)}% gross margin</p>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 text-white">
+    <div className="max-w-7xl mx-auto space-y-4 text-white">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Estimates</h2>
-          <p className="text-zinc-400 text-sm mt-1">Create and manage customer estimates.</p>
+          <h2 className="text-xl md:text-2xl font-bold text-white">Estimates</h2>
+          <p className="hidden md:block text-zinc-400 text-sm mt-1">Create and manage customer estimates.</p>
         </div>
         <Button onClick={openCreate} className="bg-stone-500 hover:bg-stone-400 text-white">
           + New Estimate
@@ -465,7 +483,7 @@ export default function EstimatesPage() {
       {/* List */}
       {filtered.length === 0 ? (
         <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="py-16 flex flex-col items-center text-center gap-3">
+          <CardContent className="py-10 flex flex-col items-center text-center gap-3">
             <FileText size={40} className="text-zinc-700" />
             {estimates.length === 0 ? (
               <>
@@ -481,33 +499,44 @@ export default function EstimatesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(est => {
-            const { total } = calcEstimateTotal(est)
-            return (
-              <div
-                key={est.id}
-                onClick={() => openDetail(est)}
-                className={`bg-zinc-900 border border-zinc-800 border-l-4 ${STATUS_BORDER[est.status]} rounded-lg p-4 cursor-pointer hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="font-semibold text-white leading-tight">{est.estimateNumber}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${STATUS_BADGE[est.status]}`}>
-                    {est.status}
-                  </span>
-                </div>
-                <p className="text-zinc-300 text-sm">{est.client.name || '—'}</p>
-                <p className="text-zinc-500 text-xs mt-1 line-clamp-1">{est.address || 'No address'}</p>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800">
-                  <span className="text-zinc-500 text-xs">{est.jobType}</span>
-                  <span className="text-stone-300 text-sm font-semibold">{fmt(total)}</span>
-                </div>
-                {est.convertedJobId && (
-                  <p className="text-teal-400 text-xs mt-2">Converted to Job</p>
+        <div className="space-y-5">
+          {estimateGroups.map(([groupKey, groupEsts]) => (
+            <div key={groupKey}>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-xs font-medium text-zinc-400 truncate">{groupKey}</p>
+                {groupEsts.length > 1 && (
+                  <span className="text-[10px] text-zinc-600 shrink-0">{groupEsts.length} estimates</span>
                 )}
               </div>
-            )
-          })}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {groupEsts.map(est => {
+                  const { total } = calcEstimateTotal(est)
+                  return (
+                    <div
+                      key={est.id}
+                      onClick={() => openDetail(est)}
+                      className={`bg-zinc-900 border border-zinc-800 border-l-4 ${STATUS_BORDER[est.status]} rounded-lg p-3 cursor-pointer hover:border-zinc-600 hover:bg-zinc-800/50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 transition-all duration-200`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="font-semibold text-white text-sm leading-tight">{est.estimateNumber}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_BADGE[est.status]}`}>
+                          {est.status}
+                        </span>
+                      </div>
+                      <p className="text-zinc-300 text-xs">{est.client.name || '—'}</p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800">
+                        <span className="text-zinc-500 text-xs">{est.jobType}</span>
+                        <span className="text-stone-300 text-sm font-semibold">{fmt(total)}</span>
+                      </div>
+                      {est.convertedJobId && (
+                        <p className="text-teal-400 text-xs mt-1.5">→ Job</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1612,6 +1641,172 @@ export default function EstimatesPage() {
                         <Input type="number" value={tc.materialCost}
                           onChange={e => setTC({ materialCost: e.target.value })}
                           placeholder="0" className={inputCls} />
+                      </div>
+                    </div>
+
+                    <PricingCards
+                      method={tc.pricingMethod}
+                      markup={tc.markupPct}
+                      onMethod={m => setTC({ pricingMethod: m })}
+                      onMarkup={v => setTC({ markupPct: v })}
+                      sellLabel="Flat Sell Price"
+                      sellValue={tc.sellPrice}
+                      onSell={v => setTC({ sellPrice: v })}
+                      subtotal={subtotal}
+                    />
+                  </div>
+                )
+              })()}
+
+              {/* ══ REPAIR CALCULATOR ════════════════════════════════════════════ */}
+              {draft.jobType === 'Repair' && (() => {
+                const tc = draft.tradeCalc
+                const method = tc.repairLaborMethod ?? 'hourly'
+                const laborCost = method === 'hourly'
+                  ? (parseFloat(tc.laborHours) || 0) * (parseFloat(tc.hourlyRate) || 0)
+                  : method === 'dayRate'
+                  ? (parseFloat(tc.numWorkers) || 0) * (parseFloat(tc.numDays) || 0) * (parseFloat(tc.dayRate) || 0)
+                  : parseFloat(tc.flatLaborRate) || 0
+                const burdenTotal = laborCost * ((parseFloat(tc.burdenPct) || 0) / 100)
+                const { subtotal } = calcEstimateTotal(draft)
+                return (
+                  <div className="space-y-3">
+
+                    {/* Labor Method */}
+                    <div className={sectionCls}>
+                      <p className={sectionLabelCls}>Labor Method</p>
+                      <BtnGroup
+                        options={['hourly', 'dayRate', 'flatRate'] as const}
+                        value={method}
+                        onChange={v => setTC({ repairLaborMethod: v })}
+                      />
+                      {method === 'hourly' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Hours Worked</Label>
+                            <Input type="number" value={tc.laborHours}
+                              onChange={e => setTC({ laborHours: e.target.value })}
+                              placeholder="0" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Hourly Rate ($)</Label>
+                            <Input type="number" value={tc.hourlyRate}
+                              onChange={e => setTC({ hourlyRate: e.target.value })}
+                              placeholder="85" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-400 text-xs">Est. Labor</Label>
+                            <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
+                          </div>
+                        </div>
+                      )}
+                      {method === 'dayRate' && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Workers</Label>
+                            <Input type="number" value={tc.numWorkers}
+                              onChange={e => setTC({ numWorkers: e.target.value })}
+                              placeholder="2" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Days</Label>
+                            <Input type="number" value={tc.numDays}
+                              onChange={e => setTC({ numDays: e.target.value })}
+                              placeholder="1" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Day Rate ($)</Label>
+                            <Input type="number" value={tc.dayRate}
+                              onChange={e => setTC({ dayRate: e.target.value })}
+                              placeholder="400" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-400 text-xs">Est. Labor</Label>
+                            <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
+                          </div>
+                        </div>
+                      )}
+                      {method === 'flatRate' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-300 text-xs">Flat Labor Rate ($)</Label>
+                            <Input type="number" value={tc.flatLaborRate}
+                              onChange={e => setTC({ flatLaborRate: e.target.value })}
+                              placeholder="0" className={inputCls} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-400 text-xs">Est. Labor</Label>
+                            <div className={readOnlyCls}>{fmtOrDash(laborCost)}</div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-700">
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">
+                            Burden % <span className="text-zinc-500">(taxes, insurance, benefits)</span>
+                          </Label>
+                          <Input type="number" value={tc.burdenPct}
+                            onChange={e => setTC({ burdenPct: e.target.value })}
+                            placeholder="35" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-400 text-xs">Burden Total</Label>
+                          <div className={readOnlyCls}>{fmtOrDash(burdenTotal)}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Materials */}
+                    <div className={sectionCls}>
+                      <p className={sectionLabelCls}>Materials</p>
+                      <div className="space-y-1.5">
+                        <Label className="text-zinc-300 text-xs">Material Cost ($)</Label>
+                        <Input type="number" value={tc.materialCost}
+                          onChange={e => setTC({ materialCost: e.target.value })}
+                          placeholder="0" className={inputCls} />
+                      </div>
+                    </div>
+
+                    {/* Additional Fees */}
+                    <div className={sectionCls}>
+                      <p className={sectionLabelCls}>Additional Fees</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Service / Trip Charge ($)</Label>
+                          <Input type="number" value={tc.serviceCallFee}
+                            onChange={e => setTC({ serviceCallFee: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Emergency / After-hours ($)</Label>
+                          <Input type="number" value={tc.emergencySurcharge}
+                            onChange={e => setTC({ emergencySurcharge: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Permit Fee ($)</Label>
+                          <Input type="number" value={tc.permitFee}
+                            onChange={e => setTC({ permitFee: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Equipment Rental ($) <span className="text-zinc-500">scaffold, lift…</span></Label>
+                          <Input type="number" value={tc.equipmentRental}
+                            onChange={e => setTC({ equipmentRental: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Disposal / Haul Away ($)</Label>
+                          <Input type="number" value={tc.disposalFee}
+                            onChange={e => setTC({ disposalFee: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-300 text-xs">Subcontractor Cost ($)</Label>
+                          <Input type="number" value={tc.subcontractorCost}
+                            onChange={e => setTC({ subcontractorCost: e.target.value })}
+                            placeholder="0" className={inputCls} />
+                        </div>
                       </div>
                     </div>
 

@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 
 export default function Layout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
-        <Sidebar />
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">

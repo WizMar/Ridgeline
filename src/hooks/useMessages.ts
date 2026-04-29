@@ -13,10 +13,10 @@ export type Message = {
   channelId: string | null
 }
 
-// 'org' = org-wide (null channel_id), string = channel uuid
 export type MessageTarget = 'org' | string
 
 const PAGE_SIZE = 40
+const POLL_INTERVAL = 5000 // fallback poll every 5s if realtime drops
 
 function toMessage(row: Record<string, unknown>): Message {
   return {
@@ -30,6 +30,15 @@ function toMessage(row: Record<string, unknown>): Message {
   }
 }
 
+async function fetchWithNames(rows: Record<string, unknown>[]): Promise<Message[]> {
+  if (rows.length === 0) return []
+  const senderIds = [...new Set(rows.map(r => r.sender_id as string))]
+  const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', senderIds)
+  const nameById: Record<string, string> = {}
+  for (const p of profiles ?? []) nameById[p.id as string] = (p.name as string) ?? 'Unknown'
+  return rows.map(r => toMessage({ ...r, sender_name: nameById[r.sender_id as string] ?? 'Unknown' }))
+}
+
 export function useMessages(target: MessageTarget | null) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -37,7 +46,9 @@ export function useMessages(target: MessageTarget | null) {
   const [sending, setSending] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const oldestRef = useRef<string | null>(null)
+  const newestRef = useRef<string | null>(null)
   const targetRef = useRef(target)
+  const realtimeOkRef = useRef(false)
   targetRef.current = target
 
   useEffect(() => {
@@ -45,7 +56,10 @@ export function useMessages(target: MessageTarget | null) {
     setLoading(true)
     setMessages([])
     oldestRef.current = null
+    newestRef.current = null
+    realtimeOkRef.current = false
 
+    // ── Initial fetch ────────────────────────────────────────────────────────
     let query = supabase
       .from('messages')
       .select('id, org_id, sender_id, content, created_at, channel_id')
@@ -60,22 +74,29 @@ export function useMessages(target: MessageTarget | null) {
 
     query.then(async ({ data }) => {
       if (data && data.length > 0) {
-        const senderIds = [...new Set(data.map(r => r.sender_id as string))]
-        const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', senderIds)
-        const nameById: Record<string, string> = {}
-        for (const p of profiles ?? []) nameById[p.id as string] = (p.name as string) ?? 'Unknown'
-        const rows = data.map(r => toMessage({ ...r, sender_name: nameById[r.sender_id as string] ?? 'Unknown' })).reverse()
-        setMessages(rows)
+        const rows = await fetchWithNames(data as Record<string, unknown>[])
+        const sorted = rows.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        setMessages(sorted)
         setHasMore(data.length === PAGE_SIZE)
-        if (rows.length > 0) oldestRef.current = rows[0].createdAt
+        oldestRef.current = sorted[0].createdAt
+        newestRef.current = sorted[sorted.length - 1].createdAt
       } else if (data) {
         setMessages([])
       }
       setLoading(false)
     })
 
+    // ── Realtime subscription ────────────────────────────────────────────────
     const channel = supabase
-      .channel(`msgs:${target}`)
+      .channel(`msgs:${target}:${user.org_id}`)
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'messages',
+      }, payload => {
+        const row = payload.old as Record<string, unknown>
+        if (row?.id) setMessages(prev => prev.filter(m => m.id !== row.id))
+      })
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -83,7 +104,6 @@ export function useMessages(target: MessageTarget | null) {
       }, async payload => {
         if (targetRef.current !== target) return
         const row = payload.new as Record<string, unknown>
-        // Filter client-side — server-side filter can silently fail with RLS
         if (target === 'org') {
           if (row.channel_id !== null) return
           if (row.org_id !== user.org_id) return
@@ -92,7 +112,9 @@ export function useMessages(target: MessageTarget | null) {
         }
         const { data } = await supabase.from('profiles').select('name').eq('id', row.sender_id).single()
         const msg = toMessage({ ...row, sender_name: data?.name ?? 'Unknown' })
-        // Replace any matching optimistic message (same sender + content), else append
+        if (newestRef.current === null || msg.createdAt > newestRef.current) {
+          newestRef.current = msg.createdAt
+        }
         setMessages(prev => {
           const tempIdx = prev.findIndex(m =>
             m.id.startsWith('temp-') && m.senderId === msg.senderId && m.content === msg.content
@@ -102,12 +124,60 @@ export function useMessages(target: MessageTarget | null) {
             next[tempIdx] = msg
             return next
           }
+          // Deduplicate: ignore if already present
+          if (prev.some(m => m.id === msg.id)) return prev
           return [...prev, msg]
         })
       })
-      .subscribe()
+      .subscribe(status => {
+        realtimeOkRef.current = status === 'SUBSCRIBED'
+      })
 
-    return () => { supabase.removeChannel(channel) }
+    // ── Polling fallback ─────────────────────────────────────────────────────
+    // Kicks in automatically when realtime is not SUBSCRIBED, ensuring
+    // messages always appear within POLL_INTERVAL ms regardless of WS state.
+    const poll = setInterval(async () => {
+      if (realtimeOkRef.current || targetRef.current !== target) return
+      if (!newestRef.current) return
+
+      let q = supabase
+        .from('messages')
+        .select('id, org_id, sender_id, content, created_at, channel_id')
+        .gt('created_at', newestRef.current)
+        .order('created_at', { ascending: true })
+
+      if (target === 'org') {
+        q = q.eq('org_id', user.org_id).is('channel_id', null)
+      } else {
+        q = q.eq('channel_id', target)
+      }
+
+      const { data } = await q
+      if (!data || data.length === 0) return
+      const rows = await fetchWithNames(data as Record<string, unknown>[])
+      if (rows.length === 0) return
+      newestRef.current = rows[rows.length - 1].createdAt
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id))
+        const fresh = rows.filter(m => !existingIds.has(m.id))
+        if (fresh.length === 0) return prev
+        // Replace any matching optimistic messages
+        let next = [...prev]
+        for (const msg of fresh) {
+          const tempIdx = next.findIndex(m =>
+            m.id.startsWith('temp-') && m.senderId === msg.senderId && m.content === msg.content
+          )
+          if (tempIdx !== -1) next[tempIdx] = msg
+          else next = [...next, msg]
+        }
+        return next
+      })
+    }, POLL_INTERVAL)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(poll)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, user?.org_id])
 
@@ -129,14 +199,11 @@ export function useMessages(target: MessageTarget | null) {
 
     const { data } = await query
     if (data && data.length > 0) {
-      const senderIds = [...new Set(data.map(r => r.sender_id as string))]
-      const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', senderIds)
-      const nameById: Record<string, string> = {}
-      for (const p of profiles ?? []) nameById[p.id as string] = (p.name as string) ?? 'Unknown'
-      const rows = data.map(r => toMessage({ ...r, sender_name: nameById[r.sender_id as string] ?? 'Unknown' })).reverse()
-      setMessages(prev => [...rows, ...prev])
+      const rows = await fetchWithNames(data as Record<string, unknown>[])
+      const sorted = rows.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      setMessages(prev => [...sorted, ...prev])
       setHasMore(data.length === PAGE_SIZE)
-      oldestRef.current = rows[0].createdAt
+      oldestRef.current = sorted[0].createdAt
     } else {
       setHasMore(false)
     }
@@ -146,7 +213,6 @@ export function useMessages(target: MessageTarget | null) {
     if (!user?.org_id || !user?.id || !content.trim() || !target) return false
     setSending(true)
 
-    // Optimistic update — show message immediately without waiting for Realtime
     const tempId = `temp-${Date.now()}`
     const optimistic: Message = {
       id: tempId,
@@ -174,5 +240,19 @@ export function useMessages(target: MessageTarget | null) {
     return true
   }, [user, target])
 
-  return { messages, loading, sending, hasMore, loadOlder, sendMessage }
+  const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    setMessages(prev => prev.filter(m => m.id !== messageId))
+    const { error, count } = await supabase
+      .from('messages')
+      .delete({ count: 'exact' })
+      .eq('id', messageId)
+      .eq('sender_id', user?.id ?? '')
+    if (error || count === 0) {
+      toast.error('Could not delete message — check permissions')
+      return false
+    }
+    return true
+  }, [user?.id])
+
+  return { messages, loading, sending, hasMore, loadOlder, sendMessage, deleteMessage }
 }

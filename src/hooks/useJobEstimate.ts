@@ -78,6 +78,7 @@ export function useJobEstimate(job: Job | null) {
       paintType: 'Exterior', paintableSqFt: '', numCoats: '2', prepWork: false,
       prepSurcharge: '', subcontractorCost: '',
       repairLaborMethod: 'hourly', numWorkers: '', numDays: '', dayRate: '', flatLaborRate: '',
+      emergencySurcharge: '', permitFee: '', equipmentRental: '', disposalFee: '',
     }
 
     const { data, error } = await supabase.from('estimates').insert({

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth, type Action } from '@/context/AuthContext'
-import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText, MessageSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 type NavItem = {
   label: string
@@ -11,84 +11,123 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard',  path: '/dashboard', action: 'view:dashboard',      icon: <LayoutDashboard   size={18} strokeWidth={1.5} /> },
-  { label: 'Clients',    path: '/clients',   action: 'view:clients',        icon: <Folder            size={18} strokeWidth={1.5} /> },
-  { label: 'Jobs',       path: '/jobs',       action: 'view:jobs:assigned',  icon: <Briefcase         size={18} strokeWidth={1.5} /> },
-  { label: 'Estimates',  path: '/estimates',  action: 'manage:estimates',    icon: <FileText          size={18} strokeWidth={1.5} /> },
-  { label: 'Messages',   path: '/messages',   action: 'view:messages',       icon: <MessageSquare     size={18} strokeWidth={1.5} /> },
-  { label: 'Employees',  path: '/employees',  action: 'view:employees',      icon: <Users             size={18} strokeWidth={1.5} /> },
-  { label: 'Time Clock', path: '/timeclock',  action: 'view:timeclock',      icon: <Clock             size={18} strokeWidth={1.5} /> },
-  { label: 'Settings',   path: '/settings',   action: 'manage:settings',     icon: <SlidersHorizontal size={18} strokeWidth={1.5} /> },
+  { label: 'Dashboard',  path: '/dashboard', action: 'view:dashboard',      icon: <LayoutDashboard   size={17} strokeWidth={1.5} /> },
+  { label: 'Clients',    path: '/clients',   action: 'view:clients',        icon: <Folder            size={17} strokeWidth={1.5} /> },
+  { label: 'Jobs',       path: '/jobs',       action: 'view:jobs:assigned',  icon: <Briefcase         size={17} strokeWidth={1.5} /> },
+  { label: 'Estimates',  path: '/estimates',  action: 'manage:estimates',    icon: <FileText          size={17} strokeWidth={1.5} /> },
+  { label: 'Messages',   path: '/messages',   action: 'view:messages',       icon: <MessageSquare     size={17} strokeWidth={1.5} /> },
+  { label: 'Employees',  path: '/employees',  action: 'view:employees',      icon: <Users             size={17} strokeWidth={1.5} /> },
+  { label: 'Time Clock', path: '/timeclock',  action: 'view:timeclock',      icon: <Clock             size={17} strokeWidth={1.5} /> },
+  { label: 'Settings',   path: '/settings',   action: 'manage:settings',     icon: <SlidersHorizontal size={17} strokeWidth={1.5} /> },
 ]
 
 type Props = {
+  collapsed?: boolean
+  onToggle?: () => void
   isOpen?: boolean
   onClose?: () => void
 }
 
-export default function Sidebar({ isOpen = true, onClose = () => {} }: Props) {
+export default function Sidebar({ collapsed = false, onToggle, isOpen = true, onClose = () => {} }: Props) {
   const { can, user } = useAuth()
   const visibleItems = navItems.filter(item => can(item.action))
 
   return (
     <aside className={`
       fixed md:static inset-y-0 left-0 z-50
-      w-60 min-h-screen bg-zinc-900 border-r border-zinc-800 flex flex-col
-      transition-transform duration-200 ease-in-out
+      min-h-screen bg-zinc-950 border-r border-zinc-800/60 flex flex-col
+      transition-all duration-200 ease-in-out
+      ${collapsed ? 'w-[60px]' : 'w-[220px]'}
       ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
-      {/* Logo — hidden on mobile (shown in top bar instead) */}
-      <div className="px-6 py-5 flex items-center border-b border-zinc-800">
-        <span className="text-lg font-bold text-white tracking-tight">Nexus</span>
+      {/* Logo + toggle */}
+      <div className={`h-14 flex items-center border-b border-zinc-800/60 shrink-0 ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
+        {!collapsed && (
+          <span className="text-sm font-bold text-white tracking-widest uppercase">Nexus</span>
+        )}
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+            title={collapsed ? 'Expand' : 'Collapse'}
+          >
+            {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          </button>
+        )}
       </div>
 
       {/* Nav Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {visibleItems.map(item => (
           <NavLink
             key={item.path}
             to={item.path}
             onClick={onClose}
+            title={collapsed ? item.label : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              `relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                collapsed ? 'justify-center' : ''
+              } ${
                 isActive
-                  ? 'bg-stone-500 text-white'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`
             }
           >
-            {item.icon}
-            {item.label}
+            {({ isActive }) => (
+              <>
+                {isActive && !collapsed && (
+                  <span className="absolute left-0 inset-y-[7px] w-[3px] bg-stone-400 rounded-r-full" />
+                )}
+                <span className={`transition-colors duration-150 ${isActive ? 'text-stone-300' : ''}`}>
+                  {item.icon}
+                </span>
+                {!collapsed && item.label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* User info + Sign Out */}
-      <div className="px-3 py-4 border-t border-zinc-800 space-y-1">
-        {user && (
-          <div className="px-3 py-2 mb-1">
-            <p className="text-white text-sm font-medium">{user.name}</p>
-            <p className="text-zinc-500 text-xs">{user.role}</p>
+      {/* User + Sign Out */}
+      <div className="px-2 py-3 border-t border-zinc-800/60 space-y-0.5">
+        {user && !collapsed && (
+          <div className="px-2.5 py-2 mb-1">
+            <p className="text-white text-xs font-semibold truncate">{user.name}</p>
+            <p className="text-zinc-600 text-xs">{user.role}</p>
           </div>
         )}
         <NavLink
           to="/account"
           onClick={onClose}
+          title={collapsed ? 'My Account' : undefined}
           className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive ? 'bg-stone-500 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+            `relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+              collapsed ? 'justify-center' : ''
+            } ${
+              isActive ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`
           }
         >
-          <User size={18} strokeWidth={1.5} />
-          My Account
+          {({ isActive }) => (
+            <>
+              {isActive && !collapsed && (
+                <span className="absolute left-0 inset-y-[7px] w-[3px] bg-stone-400 rounded-r-full" />
+              )}
+              <span className={`transition-colors duration-150 ${isActive ? 'text-stone-300' : ''}`}>
+                <User size={17} strokeWidth={1.5} />
+              </span>
+              {!collapsed && 'My Account'}
+            </>
+          )}
         </NavLink>
         <button
           onClick={() => supabase.auth.signOut()}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors w-full"
+          title={collapsed ? 'Sign Out' : undefined}
+          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/5 transition-all duration-150 w-full ${collapsed ? 'justify-center' : ''}`}
         >
-          <LogOut size={18} strokeWidth={1.5} />
-          Sign Out
+          <LogOut size={17} strokeWidth={1.5} />
+          {!collapsed && 'Sign Out'}
         </button>
       </div>
     </aside>

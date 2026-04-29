@@ -153,11 +153,11 @@ export default function EmployeesPage() {
   )
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 text-white">
+    <div className="max-w-5xl mx-auto space-y-4 text-white">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Employees</h2>
-          <p className="text-zinc-400 text-sm mt-1">Manage your team members and their roles.</p>
+          <h2 className="text-xl md:text-2xl font-bold text-white">Employees</h2>
+          <p className="hidden md:block text-zinc-400 text-sm mt-1">Manage your team members and their roles.</p>
         </div>
         <div className="flex gap-2">
           {canInvite && (
@@ -180,7 +180,7 @@ export default function EmployeesPage() {
 
       <Card className="bg-zinc-900 border-zinc-800 text-white">
         {filtered.length === 0 ? (
-          <CardContent className="py-12 flex flex-col items-center gap-3 text-center">
+          <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
             <Users className="w-10 h-10 text-zinc-600" strokeWidth={1.5} />
             <p className="text-zinc-500 text-sm">
               {employees.length === 0 ? 'No employees yet.' : 'No results found.'}
@@ -192,63 +192,47 @@ export default function EmployeesPage() {
             )}
           </CardContent>
         ) : (
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr className="border-b border-zinc-800 text-zinc-400">
-                  <th className="text-left px-4 py-3 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Phone</th>
-                  <th className="text-left px-4 py-3 font-medium">Role</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(emp => (
-                  <tr key={emp.id} className="border-b border-zinc-800 hover:bg-zinc-800 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {emp.profilePicture ? (
-                          <img src={emp.profilePicture} className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-300 text-xs font-bold">
-                            {emp.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => navigate(`/employees/${emp.id}`)}
-                          className="text-white font-medium hover:text-stone-300 transition-colors"
-                        >
-                          {emp.name}
-                        </button>
+          <CardContent className="p-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              {filtered.map(emp => (
+                <div key={emp.id} className="bg-zinc-800 rounded-lg p-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    {emp.profilePicture ? (
+                      <img src={emp.profilePicture} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-300 text-xs font-bold shrink-0">
+                        {emp.name.charAt(0).toUpperCase()}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-400 hidden sm:table-cell">{emp.phone || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${roleColors[emp.role]}`}>{emp.role}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[emp.status]}`}>{emp.status}</span>
-                    </td>
-                    <td className="px-4 py-3 flex gap-2">
-                      <button onClick={() => openEdit(emp)} className="text-zinc-400 hover:text-white text-xs underline">Edit</button>
-                      <button onClick={() => toggleStatus(emp.id)} className="text-zinc-400 hover:text-white text-xs underline">
-                        {emp.status === 'Active' ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button onClick={() => archiveEmployee(emp.id)} className="text-yellow-500 hover:text-yellow-400 text-xs underline">Archive</button>
-                      <button onClick={() => setConfirmDelete(emp.id)} className="text-red-500 hover:text-red-400 text-xs underline">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                    <button
+                      onClick={() => navigate(`/employees/${emp.id}`)}
+                      className="text-white text-sm font-medium hover:text-stone-300 transition-colors text-left line-clamp-1"
+                    >
+                      {emp.name}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${roleColors[emp.role]}`}>{emp.role}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${statusColors[emp.status]}`}>{emp.status}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 pt-1 border-t border-zinc-700">
+                    <button onClick={() => openEdit(emp)} className="text-zinc-400 hover:text-white text-xs">Edit</button>
+                    <button onClick={() => toggleStatus(emp.id)} className="text-zinc-400 hover:text-white text-xs">
+                      {emp.status === 'Active' ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button onClick={() => archiveEmployee(emp.id)} className="text-yellow-500 hover:text-yellow-400 text-xs">Archive</button>
+                    <button onClick={() => setConfirmDelete(emp.id)} className="text-red-500 hover:text-red-400 text-xs">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         )}
       </Card>
 
       {/* Invite Member Dialog */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">Invite Team Member</DialogTitle>
           </DialogHeader>
@@ -331,7 +315,7 @@ export default function EmployeesPage() {
 
       {/* Add / Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white">{editTarget ? 'Edit Employee' : 'Add Employee'}</DialogTitle>
           </DialogHeader>
@@ -341,7 +325,7 @@ export default function EmployeesPage() {
               <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="John Smith" className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-zinc-300">Phone</Label>
                 <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
@@ -353,7 +337,7 @@ export default function EmployeesPage() {
                   placeholder="john@email.com" className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-zinc-300">Role</Label>
                 <Select value={form.role} onValueChange={val => setForm({ ...form, role: val as Employee['role'] })}>

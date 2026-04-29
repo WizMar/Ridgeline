@@ -173,15 +173,15 @@ export default function TimeClockPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 text-white">
+    <div className="max-w-5xl mx-auto space-y-4 md:space-y-8 text-white">
       <div>
-        <h2 className="text-2xl font-bold text-white">Time Clock</h2>
-        <p className="text-zinc-400 text-sm mt-1">Track employee hours with GPS location.</p>
+        <h2 className="text-xl md:text-2xl font-bold text-white">Time Clock</h2>
+        <p className="hidden md:block text-zinc-400 text-sm mt-1">Track employee hours with GPS location.</p>
       </div>
 
 {/* Live View */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">Currently Clocked In</h3>
+        <h3 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">Currently Clocked In</h3>
         {visibleActiveEntries.length === 0 ? (
           <p className="text-zinc-500 text-sm">
             {canSeeLiveView ? 'No one is clocked in right now.' : 'You are not clocked in.'}
@@ -224,7 +224,7 @@ export default function TimeClockPage() {
 
       {/* Employee Clock In/Out Panel */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-3">Employee Timecards — Today</h3>
+        <h3 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">Employee Timecards — Today</h3>
         {employees.length === 0 ? (
           <p className="text-zinc-500 text-sm">No employees added yet. Add employees first.</p>
         ) : (
@@ -309,7 +309,7 @@ export default function TimeClockPage() {
       {/* Weekly Summary */}
       {visibleEmployees.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3">Pay Period Summary <span className="text-zinc-500 text-sm font-normal">({formatDate(payPeriod.start, prefs.dateFormat)} – {formatDate(payPeriod.end, prefs.dateFormat)})</span></h3>
+          <h3 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">Pay Period Summary <span className="text-zinc-500 text-sm font-normal">({formatDate(payPeriod.start, prefs.dateFormat)} – {formatDate(payPeriod.end, prefs.dateFormat)})</span></h3>
           <Card className="bg-zinc-900 border-zinc-800 text-white">
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm min-w-[480px]">
@@ -352,7 +352,7 @@ export default function TimeClockPage() {
       {/* Admin — Pending Edit Requests */}
       {canApproveEdits && pendingEdits.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3">Pending Edit Requests</h3>
+          <h3 className="text-base md:text-lg font-semibold text-white mb-2 md:mb-3">Pending Edit Requests</h3>
           <div className="space-y-3">
             {pendingEdits.map(entry => (
               <Card key={entry.id} className="bg-zinc-900 border-yellow-800 text-white">
@@ -395,7 +395,7 @@ export default function TimeClockPage() {
       {/* Edit Request Modal */}
       {editModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md space-y-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-white font-semibold text-lg">Request Time Edit</h3>
             <div className="space-y-2">
               <label className="text-zinc-300 text-sm">Clock In</label>

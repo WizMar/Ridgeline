@@ -136,9 +136,13 @@ export default function ClientProfilePage() {
 
   async function handleSaveJob() {
     if (!jobDraft.title.trim()) return
-    await addJob({ ...jobDraft, updatedAt: new Date().toISOString() } as Omit<Job, 'id' | 'createdAt' | 'updatedAt'>)
-    setJobDialogOpen(false)
-    toast.success('Job created')
+    const ok = await addJob({ ...jobDraft, updatedAt: new Date().toISOString() } as Omit<Job, 'id' | 'createdAt' | 'updatedAt'>)
+    if (ok) {
+      setJobDialogOpen(false)
+      toast.success('Job created')
+    } else {
+      toast.error('Failed to create job. Please try again.')
+    }
   }
 
   function toggleCrew(empId: string) {
@@ -345,7 +349,7 @@ export default function ClientProfilePage() {
 
       {/* Edit Client Dialog */}
       <Dialog open={editClientOpen} onOpenChange={setEditClientOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-md">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Client</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -382,7 +386,7 @@ export default function ClientProfilePage() {
 
       {/* Add / Edit Property Dialog */}
       <Dialog open={propertyDialogOpen} onOpenChange={setPropertyDialogOpen}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-md">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingProperty ? 'Edit Property' : 'Add Property'}</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
@@ -431,7 +435,7 @@ export default function ClientProfilePage() {
                 placeholder="e.g. Full Roof Replacement"
                 className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-zinc-300">Status</Label>
                 <Select value={jobDraft.status} onValueChange={v => setJobDraft(d => ({ ...d, status: v as JobStatus }))}>
@@ -470,7 +474,7 @@ export default function ClientProfilePage() {
             {crew.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-zinc-300">Assign Crew</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {crew.map(e => (
                     <button key={e.id} type="button" onClick={() => toggleCrew(e.id)}
                       className={`text-left px-3 py-2 rounded-lg border text-sm transition-colors ${
