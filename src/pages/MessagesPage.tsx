@@ -384,16 +384,9 @@ export default function MessagesPage() {
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); setSelectedChannelId(ch.id) }}
-                  className="flex md:hidden w-7 h-7 items-center justify-center rounded-lg text-zinc-600 active:text-zinc-300 shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 active:text-zinc-300 transition-colors shrink-0"
                 >
                   <MoreHorizontal size={16} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); setSelectedChannelId(ch.id) }}
-                  className="hidden md:flex opacity-0 group-hover/row:opacity-100 w-7 h-7 items-center justify-center rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
-                  title="Delete conversation"
-                >
-                  <Trash2 size={13} />
                 </button>
               </div>
             )
