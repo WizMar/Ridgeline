@@ -78,6 +78,22 @@ export default function SettingsPage() {
   const [accessSaved, setAccessSaved] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteInput, setDeleteInput] = useState('')
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoUpload(file: File) {
+    if (!user?.org_id) return
+    setLogoUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `${user.org_id}/logo.${ext}`
+    const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true })
+    if (error) { setLogoUploading(false); return }
+    const { data } = supabase.storage.from('logos').getPublicUrl(path)
+    // Bust cache with timestamp so the new logo loads immediately
+    const url = `${data.publicUrl}?t=${Date.now()}`
+    setSettings(s => ({ ...s, company: { ...s.company, logoUrl: url } }))
+    setLogoUploading(false)
+  }
 
   useEffect(() => {
     if (user?.org_id) {
@@ -213,14 +229,47 @@ export default function SettingsPage() {
             <AccordionTrigger className="text-white font-medium hover:no-underline py-4">Branding</AccordionTrigger>
             <AccordionContent className="pb-4">
               <div className="space-y-4">
-                <Field label="Logo URL" hint="Paste a direct link to your company logo (PNG or SVG recommended).">
-                  <Input value={company.logoUrl} onChange={e => set('company', 'logoUrl', e.target.value)} placeholder="https://yourcompany.com/logo.png" />
-                </Field>
-                {company.logoUrl && (
-                  <div className="bg-zinc-800 rounded-lg p-3 flex items-center gap-3">
-                    <img src={company.logoUrl} alt="Logo preview" className="h-10 w-auto object-contain rounded" onError={e => (e.currentTarget.style.display = 'none')} />
-                    <p className="text-zinc-400 text-xs">Logo preview</p>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f) }}
+                />
+                {company.logoUrl ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0">
+                      <img src={company.logoUrl} alt="Company logo" className="w-full h-full object-contain p-2" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-white text-sm font-medium">Company Logo</p>
+                      <p className="text-zinc-500 text-xs">PNG, JPG, or SVG recommended</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={logoUploading}
+                      >
+                        <Upload size={13} className="mr-1.5" />
+                        {logoUploading ? 'Uploading…' : 'Replace Logo'}
+                      </Button>
+                    </div>
                   </div>
+                ) : (
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={logoUploading}
+                    className="w-full border-2 border-dashed border-zinc-700 hover:border-stone-500 rounded-xl p-8 flex flex-col items-center gap-3 transition-colors disabled:opacity-50"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
+                      <Upload size={20} className="text-zinc-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-white text-sm font-medium">{logoUploading ? 'Uploading…' : 'Upload Company Logo'}</p>
+                      <p className="text-zinc-500 text-xs mt-1">PNG, JPG, or SVG</p>
+                    </div>
+                  </button>
                 )}
               </div>
               <SaveButton />

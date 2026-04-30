@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth, type Action } from '@/context/AuthContext'
+import { useSettings } from '@/context/SettingsContext'
 import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText, MessageSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 type NavItem = {
@@ -30,7 +31,10 @@ type Props = {
 
 export default function Sidebar({ collapsed = false, onToggle, isOpen = true, onClose = () => {} }: Props) {
   const { can, user } = useAuth()
+  const { settings } = useSettings()
   const visibleItems = navItems.filter(item => can(item.action))
+  const logoUrl = settings.company.logoUrl
+  const companyName = settings.company.name || 'Nexus'
 
   return (
     <aside className={`
@@ -41,17 +45,43 @@ export default function Sidebar({ collapsed = false, onToggle, isOpen = true, on
       ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
       {/* Logo + toggle */}
-      <div className={`h-14 flex items-center border-b border-zinc-800/60 shrink-0 ${collapsed ? 'justify-center px-0' : 'justify-between px-4'}`}>
+      <div className={`h-14 flex items-center border-b border-zinc-800/60 shrink-0 ${collapsed ? 'justify-center px-0' : 'justify-between px-3'}`}>
         {!collapsed && (
-          <span className="text-sm font-bold text-white tracking-widest uppercase">Nexus</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded object-contain shrink-0 bg-white/5 p-0.5" />
+            ) : (
+              <div className="h-7 w-7 rounded bg-stone-600 flex items-center justify-center shrink-0">
+                <span className="text-white text-xs font-bold">{companyName.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+            <span className="text-sm font-bold text-white truncate">{companyName}</span>
+          </div>
         )}
-        {onToggle && (
+        {collapsed && logoUrl && (
+          <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded object-contain bg-white/5 p-0.5" />
+        )}
+        {collapsed && !logoUrl && (
+          <div className="h-7 w-7 rounded bg-stone-600 flex items-center justify-center">
+            <span className="text-white text-xs font-bold">{companyName.charAt(0).toUpperCase()}</span>
+          </div>
+        )}
+        {onToggle && !collapsed && (
+          <button
+            onClick={onToggle}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors shrink-0"
+            title="Collapse"
+          >
+            <PanelLeftClose size={15} />
+          </button>
+        )}
+        {onToggle && collapsed && (
           <button
             onClick={onToggle}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
-            title={collapsed ? 'Expand' : 'Collapse'}
+            title="Expand"
           >
-            {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+            <PanelLeftOpen size={15} />
           </button>
         )}
       </div>
