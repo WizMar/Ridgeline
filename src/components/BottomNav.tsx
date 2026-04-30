@@ -25,20 +25,28 @@ export default function BottomNav() {
   const visibleItems = navItems.filter(item => can(item.action))
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-zinc-900 border-t border-zinc-800">
-      <div className="flex overflow-x-auto scrollbar-none">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-zinc-900/95 backdrop-blur border-t border-zinc-800">
+      <div className="flex overflow-x-auto scrollbar-none pb-safe">
         {visibleItems.map(item => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 py-2 px-3 flex-1 min-w-[60px] transition-colors ${
-                isActive ? 'text-stone-400' : 'text-zinc-500 hover:text-zinc-300'
+              `flex flex-col items-center justify-center gap-1 py-2 px-2 flex-1 min-w-[56px] transition-colors ${
+                isActive ? 'text-stone-300' : 'text-zinc-600 active:text-zinc-300'
               }`
             }
           >
-            {item.icon}
-            <span className="text-[10px] font-medium leading-none">{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-stone-500/20' : ''}`}>
+                  {item.icon}
+                </div>
+                <span className={`text-[9px] font-semibold leading-none tracking-wide ${isActive ? 'text-stone-400' : ''}`}>
+                  {item.label}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>
