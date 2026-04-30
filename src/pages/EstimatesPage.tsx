@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, BookOpen, FileText, Sparkles } from 'lucide-react'
+import { X, BookOpen, FileText, Sparkles, CheckCircle, XCircle, SendHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useEstimates } from '@/context/EstimatesContext'
@@ -7,6 +7,7 @@ import { useJobs } from '@/context/JobsContext'
 import { useSettings } from '@/context/SettingsContext'
 import { useEmployees } from '@/context/EmployeeContext'
 import { usePriceBook } from '@/context/PriceBookContext'
+import { useAuth } from '@/context/AuthContext'
 import { PDFDownloadButton } from '@/components/PDFDownloadButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -237,6 +238,9 @@ export default function EstimatesPage() {
   const { addJob } = useJobs()
   const { settings } = useSettings()
   const { employees } = useEmployees()
+  const { user } = useAuth()
+
+  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<EstimateStatus | 'All'>('All')
@@ -244,6 +248,8 @@ export default function EstimatesPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [confirmConvert, setConfirmConvert] = useState<Estimate | null>(null)
+  const [declinePrompt, setDeclinePrompt] = useState<Estimate | null>(null)
+  const [declineReason, setDeclineReason] = useState('')
   const [draft, setDraft] = useState<Estimate | null>(null)
   const [selected, setSelected] = useState<Estimate | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -391,6 +397,35 @@ export default function EstimatesPage() {
     toast.success('Estimate deleted')
   }
 
+  function changeStatus(estimate: Estimate, status: EstimateStatus, extra?: Partial<Estimate>) {
+    const updated = { ...estimate, ...extra, status, updatedAt: new Date().toISOString() }
+    updateEstimate(updated)
+    setSelected(updated)
+  }
+
+  function handleSubmit(estimate: Estimate) {
+    changeStatus(estimate, 'Submitted')
+    toast.success('Estimate submitted for approval')
+  }
+
+  function handleApprove(estimate: Estimate) {
+    changeStatus(estimate, 'Approved', { declineReason: '' })
+    toast.success('Estimate approved')
+  }
+
+  function handleDecline(estimate: Estimate) {
+    setDeclinePrompt(estimate)
+    setDeclineReason('')
+  }
+
+  function confirmDecline() {
+    if (!declinePrompt || !declineReason.trim()) return
+    changeStatus(declinePrompt, 'Declined', { declineReason: declineReason.trim() })
+    setDeclinePrompt(null)
+    setDeclineReason('')
+    toast.success('Estimate declined')
+  }
+
   async function handleConvert(estimate: Estimate) {
     const leads = employees.filter(e =>
       e.status === 'Active' &&
@@ -529,7 +564,10 @@ export default function EstimatesPage() {
                         <span className="text-stone-300 text-sm font-semibold">{fmt(total)}</span>
                       </div>
                       {est.convertedJobId && (
-                        <p className="text-teal-400 text-xs mt-1.5">→ Job</p>
+                        <p className="text-teal-400 text-xs mt-1.5">→ Converted to Job</p>
+                      )}
+                      {est.status === 'Declined' && est.declineReason && (
+                        <p className="text-red-400 text-xs mt-1.5 truncate">✕ {est.declineReason}</p>
                       )}
                     </div>
                   )
@@ -615,7 +653,13 @@ export default function EstimatesPage() {
                   )}
                   {selected.convertedJobId && (
                     <div className="bg-teal-900/30 border border-teal-700 rounded-lg p-3">
-                      <p className="text-teal-300 text-sm font-medium">This estimate has been converted to a job.</p>
+                      <p className="text-teal-300 text-sm font-medium">✓ Converted to a job.</p>
+                    </div>
+                  )}
+                  {selected.status === 'Declined' && selected.declineReason && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                      <p className="text-red-400 text-xs font-medium uppercase tracking-wide mb-1">Reason for Decline</p>
+                      <p className="text-red-200 text-sm">{selected.declineReason}</p>
                     </div>
                   )}
                 </div>
@@ -640,23 +684,43 @@ export default function EstimatesPage() {
                     totals={calcEstimateTotal(selected)}
                     company={settings.company}
                   />
-                  <Select
-                    value={selected.status}
-                    onValueChange={v => {
-                      const updated = { ...selected, status: v as EstimateStatus, updatedAt: new Date().toISOString() }
-                      updateEstimate(updated)
-                      setSelected(updated)
-                    }}
-                  >
-                    <SelectTrigger className="border-zinc-600 text-zinc-300 bg-transparent w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                      {ESTIMATE_STATUSES.map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Workflow actions — role-based */}
+                  {selected.status === 'Draft' && (
+                    <Button
+                      className="bg-yellow-600 hover:bg-yellow-500 text-white"
+                      onClick={() => handleSubmit(selected)}
+                    >
+                      <SendHorizontal size={14} className="mr-1.5" />
+                      Submit for Approval
+                    </Button>
+                  )}
+                  {selected.status === 'Submitted' && isAdmin && (
+                    <>
+                      <Button
+                        className="bg-emerald-700 hover:bg-emerald-600 text-white"
+                        onClick={() => handleApprove(selected)}
+                      >
+                        <CheckCircle size={14} className="mr-1.5" />
+                        Approve
+                      </Button>
+                      <Button
+                        className="bg-red-700 hover:bg-red-600 text-white"
+                        onClick={() => handleDecline(selected)}
+                      >
+                        <XCircle size={14} className="mr-1.5" />
+                        Decline
+                      </Button>
+                    </>
+                  )}
+                  {selected.status === 'Declined' && (
+                    <Button
+                      className="bg-yellow-600 hover:bg-yellow-500 text-white"
+                      onClick={() => handleSubmit(selected)}
+                    >
+                      <SendHorizontal size={14} className="mr-1.5" />
+                      Resubmit
+                    </Button>
+                  )}
                   {canConvert(selected) && (
                     <Button
                       className="bg-stone-500 hover:bg-stone-400 text-white"
@@ -2089,6 +2153,35 @@ export default function EstimatesPage() {
             <Button className="bg-stone-500 hover:bg-stone-400 text-white"
               onClick={() => confirmConvert && handleConvert(confirmConvert)}>
               Convert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Decline Reason */}
+      <Dialog open={!!declinePrompt} onOpenChange={() => setDeclinePrompt(null)}>
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Decline Estimate</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Provide a reason so the team knows what to fix.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={declineReason}
+            onChange={e => setDeclineReason(e.target.value)}
+            placeholder="e.g. Materials cost too high, please revise labor estimate..."
+            rows={4}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-stone-500 resize-none"
+          />
+          <DialogFooter className="mt-2">
+            <Button variant="ghost" className="text-zinc-400" onClick={() => setDeclinePrompt(null)}>Cancel</Button>
+            <Button
+              className="bg-red-700 hover:bg-red-600 text-white"
+              disabled={!declineReason.trim()}
+              onClick={confirmDecline}
+            >
+              Decline Estimate
             </Button>
           </DialogFooter>
         </DialogContent>
