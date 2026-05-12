@@ -45,11 +45,12 @@ function toJob(row: Record<string, unknown>): Job {
 }
 
 export function JobsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
     if (!user?.org_id) {
       setLoading(false)
       return
@@ -64,7 +65,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
         if (data) setJobs(data.map(toJob))
         setLoading(false)
       })
-  }, [user?.org_id])
+  }, [user?.org_id, authLoading])
 
   async function addJob(job: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
     if (!user?.org_id) return false
