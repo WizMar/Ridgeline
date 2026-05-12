@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 3000))
+      const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 8000))
       const query = supabase
         .from('profiles')
         .select('name, role, org_id')
@@ -205,15 +205,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 5000)
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      clearTimeout(timeout)
-      setSession(session)
-      if (session) await loadProfile(session)
-      setLoading(false)
-    })
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       if (session) {
@@ -222,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
         setCustomPermissions({})
       }
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
