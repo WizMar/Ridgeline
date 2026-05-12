@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useJobs } from '@/context/JobsContext'
 import { useEmployees } from '@/context/EmployeeContext'
 import { useAuth } from '@/context/AuthContext'
@@ -57,9 +57,16 @@ export default function JobsPage() {
   const { user, can } = useAuth()
   const { prefs } = usePreferences()
 
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState<JobStatus>('Active')
-  const [showArchive, setShowArchive] = useState(false)
+  const [showArchive, setShowArchive] = useState(() => searchParams.get('archive') === '1')
+  const [filterStatus, setFilterStatus] = useState<JobStatus>(() => {
+    const s = searchParams.get('status') as JobStatus
+    const validActive = ACTIVE_STATUSES.includes(s)
+    const validArchive = ARCHIVED_STATUSES.includes(s)
+    if (validActive || validArchive) return s
+    return 'Active'
+  })
   const [dialogOpen, setDialogOpen] = useState(false)
   const [draft, setDraft] = useState<Job>(newJob())
 
@@ -142,7 +149,7 @@ export default function JobsPage() {
         <div className="flex items-center gap-2">
           {isAdmin && (
             <button
-              onClick={() => { setShowArchive(s => { const next = !s; setFilterStatus(next ? 'Paid' : 'Active'); return next }) }}
+              onClick={() => { setShowArchive(s => { const next = !s; const status = next ? 'Paid' : 'Active'; setFilterStatus(status); setSearchParams(next ? { archive: '1', status } : { status }); return next }) }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
                 showArchive
                   ? 'border-amber-700 bg-amber-900/30 text-amber-400'
@@ -167,7 +174,7 @@ export default function JobsPage() {
           {modeStatuses.map(s => (
             <button
               key={s}
-              onClick={() => setFilterStatus(s)}
+              onClick={() => { setFilterStatus(s); setSearchParams(showArchive ? { archive: '1', status: s } : { status: s }) }}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 filterStatus === s
                   ? 'border-stone-500 text-white'

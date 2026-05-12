@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useParams, useNavigate, Navigate } from 'react-router-dom'
+import { useParams, useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { useJobs } from '@/context/JobsContext'
 import { useClients } from '@/context/ClientsContext'
 import { useEmployees } from '@/context/EmployeeContext'
@@ -66,7 +66,8 @@ export default function JobDetailPage() {
     ? job?.leadId === myEmployee.id || job?.crewIds.includes(myEmployee.id)
     : false
 
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState<Tab>(() => (searchParams.get('tab') as Tab) || 'overview')
   const [editOpen, setEditOpen] = useState(false)
   const [draft, setDraft] = useState<Job | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -411,7 +412,7 @@ export default function JobDetailPage() {
         {TABS.map(t => (
           <button
             key={t.key}
-            onClick={() => setActiveTab(t.key)}
+            onClick={() => { setActiveTab(t.key); setSearchParams({ tab: t.key }) }}
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === t.key
                 ? 'border-stone-500 text-white'
