@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Navigate } from 'react-router-dom'
 import { useJobs } from '@/context/JobsContext'
 import { useClients } from '@/context/ClientsContext'
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
-  ChevronLeft, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText, FileSignature, Download,
+  ChevronLeft, ChevronDown, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText, FileSignature, Download,
 } from 'lucide-react'
 import {
   type Job, type JobStatus, type JobType,
@@ -26,6 +26,22 @@ import {
 import JobEstimateSection from '@/components/JobEstimateSection'
 
 type Tab = 'overview' | 'photos' | 'estimate' | 'approval' | 'contract'
+
+const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
+  Draft: 'Scheduled',
+  Scheduled: 'Active',
+  Active: 'Completed',
+  Completed: 'Invoiced',
+  Invoiced: 'Paid',
+}
+
+const NEXT_LABEL: Partial<Record<JobStatus, string>> = {
+  Draft: 'Schedule',
+  Scheduled: 'Start Job',
+  Active: 'Mark Complete',
+  Completed: 'Send Invoice',
+  Invoiced: 'Mark Paid',
+}
 
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>()
@@ -67,6 +83,16 @@ export default function JobDetailPage() {
   const [contractTitle, setContractTitle] = useState('')
   const [contractBody, setContractBody] = useState('')
   const [contractCopied, setContractCopied] = useState(false)
+  const [statusPickerOpen, setStatusPickerOpen] = useState(false)
+  const statusPickerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (statusPickerRef.current && !statusPickerRef.current.contains(e.target as Node))
+        setStatusPickerOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   if (!job) return <Navigate to="/jobs" replace />
   if (isFieldWorker && !isAssigned) return <Navigate to="/jobs" replace />
@@ -74,6 +100,24 @@ export default function JobDetailPage() {
 
   const empName = (id: string | null) =>
     id ? (employees.find(e => e.id === id)?.name ?? 'Unknown') : '—'
+
+  const canBill = isAdmin || user?.role === 'Project Manager'
+  const nextStatus = NEXT_STATUS[j.status]
+  const nextLabel = NEXT_LABEL[j.status]
+  const canAdvance = !!nextStatus && !isFieldWorker &&
+    (j.status === 'Completed' || j.status === 'Invoiced' ? canBill : true)
+
+  async function handleAdvanceStatus() {
+    if (!nextStatus) return
+    await updateJob({ ...j, status: nextStatus, updatedAt: new Date().toISOString() })
+    toast.success(`Job marked ${nextStatus}`)
+  }
+
+  async function handleSetStatus(status: JobStatus) {
+    setStatusPickerOpen(false)
+    await updateJob({ ...j, status, updatedAt: new Date().toISOString() })
+    toast.success(`Job marked ${status}`)
+  }
 
   const backPath = client ? `/clients/${client.id}` : '/jobs'
   const backLabel = client ? client.name : 'Jobs'
@@ -292,9 +336,43 @@ export default function JobDetailPage() {
             )}
           </div>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Next step button */}
+          {canAdvance && nextLabel && (
+            <Button size="sm" onClick={handleAdvanceStatus} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5">
+              {nextLabel}
+            </Button>
+          )}
+
+          {/* Admin status picker */}
+          {isAdmin && (
+            <div ref={statusPickerRef} className="relative">
+              <button
+                onClick={() => setStatusPickerOpen(o => !o)}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-colors text-xs"
+              >
+                <ChevronDown size={13} />
+              </button>
+              {statusPickerOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden min-w-[140px]">
+                  {([...Object.keys(NEXT_STATUS).map(k => k as JobStatus), 'Cancelled', 'Written Off'] as JobStatus[])
+                    .filter((s, i, arr) => arr.indexOf(s) === i && s !== j.status)
+                    .map(s => (
+                      <button
+                        key={s}
+                        onClick={() => handleSetStatus(s)}
+                        className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <Button variant="outline" size="sm" onClick={downloadJobReport} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
-            <Download size={13} /> Download
+            <Download size={13} />
           </Button>
           {!isFieldWorker && (
             <Button variant="outline" size="sm" onClick={openEdit} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
