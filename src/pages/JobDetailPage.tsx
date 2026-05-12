@@ -242,6 +242,20 @@ export default function JobDetailPage() {
     const crewNames = j.crewIds.length ? j.crewIds.map(id => empName(id)).join(', ') : 'None'
     const contract = contracts.find(c => c.jobId === j.id && c.status !== 'voided')
 
+    const categories: MediaCategory[] = ['before', 'during', 'damage', 'after']
+    const photosByCategory = categories
+      .map(cat => ({ cat, items: media.filter(m => m.category === cat && m.type === 'photo') }))
+      .filter(({ items }) => items.length > 0)
+
+    const photosSection = photosByCategory.length > 0 ? `
+      ${photosByCategory.map(({ cat, items }) => `
+        <h2>${cat.charAt(0).toUpperCase() + cat.slice(1)} Photos</h2>
+        <div class="photo-grid">
+          ${items.map(m => `<img src="${m.url}" alt="${cat}" />`).join('')}
+        </div>
+      `).join('')}
+    ` : ''
+
     const contractSection = contract ? `
       <h2>Contract: ${contract.title}</h2>
       ${contract.status === 'signed' ? `
@@ -271,7 +285,9 @@ export default function JobDetailPage() {
     .meta { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
     .signed-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #15803d; margin-bottom: 14px; }
     .contract-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
-    @media print { body { margin: 20px auto; } }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-grid img { width: 100%; border-radius: 6px; object-fit: cover; aspect-ratio: 4/3; }
+    @media print { body { margin: 20px auto; } .photo-grid { break-inside: avoid; } }
   </style>
 </head>
 <body>
@@ -298,6 +314,7 @@ export default function JobDetailPage() {
 
   ${j.scope ? `<h2>Scope of Work</h2><pre>${j.scope}</pre>` : ''}
   ${j.notes ? `<h2>Internal Notes</h2><pre>${j.notes}</pre>` : ''}
+  ${photosSection}
   ${contractSection}
 
   <script>window.onload = () => window.print()</script>
@@ -371,9 +388,11 @@ export default function JobDetailPage() {
             </div>
           )}
 
-          <Button variant="outline" size="sm" onClick={downloadJobReport} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
-            <Download size={13} />
-          </Button>
+          {!isFieldWorker && (
+            <Button variant="outline" size="sm" onClick={downloadJobReport} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
+              <Download size={13} />
+            </Button>
+          )}
           {!isFieldWorker && (
             <Button variant="outline" size="sm" onClick={openEdit} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
               <Pencil size={13} /> Edit
