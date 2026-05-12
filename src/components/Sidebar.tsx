@@ -15,7 +15,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard',  path: '/dashboard', action: 'view:dashboard',      icon: <LayoutDashboard   size={17} strokeWidth={1.5} /> },
   { label: 'Clients',    path: '/clients',   action: 'view:clients',        icon: <Folder            size={17} strokeWidth={1.5} /> },
   { label: 'Jobs',       path: '/jobs',       action: 'view:jobs:assigned',  icon: <Briefcase         size={17} strokeWidth={1.5} /> },
-  { label: 'Estimates',  path: '/estimates',  action: 'manage:estimates',    icon: <FileText          size={17} strokeWidth={1.5} /> },
+  { label: 'Estimates',  path: '/estimates',  action: 'view:estimates',      icon: <FileText          size={17} strokeWidth={1.5} /> },
   { label: 'Messages',   path: '/messages',   action: 'view:messages',       icon: <MessageSquare     size={17} strokeWidth={1.5} /> },
   { label: 'Employees',  path: '/employees',  action: 'view:employees',      icon: <Users             size={17} strokeWidth={1.5} /> },
   { label: 'Time Clock', path: '/timeclock',  action: 'view:timeclock',      icon: <Clock             size={17} strokeWidth={1.5} /> },

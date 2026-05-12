@@ -34,12 +34,15 @@ export type Action =
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
   Subcontractor: [
+    'view:dashboard',
     'view:timeclock',
     'view:jobs:assigned',
     'view:messages',
   ],
   Employee: [
+    'view:dashboard',
     'view:timeclock',
+    'view:jobs:assigned',
     'view:messages',
   ],
   Lead: [

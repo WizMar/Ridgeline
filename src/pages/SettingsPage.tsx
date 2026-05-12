@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check, LayoutDashboard, BookOpen, Pencil, Trash2, Plus, Upload, Download } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check, LayoutDashboard, BookOpen, Pencil, Trash2, Plus, Upload, Download, FileSignature } from 'lucide-react'
+import ContractTemplateSection from '@/components/ContractTemplateSection'
 import { read, utils, writeFile } from 'xlsx'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -55,25 +56,49 @@ const DASHBOARD_WIDGETS: { key: keyof DashboardVisibility; label: string; descri
   { key: 'recentJobs',   label: 'Recent Jobs',      description: 'Table of the 5 most recently created jobs' },
 ]
 
-type Section = 'company' | 'pricing' | 'pricebook' | 'payperiod' | 'roles' | 'dashboard' | 'notifications' | 'subscription' | 'danger'
+type Section = 'company' | 'pricing' | 'pricebook' | 'contracts' | 'payperiod' | 'roles' | 'dashboard' | 'notifications' | 'subscription' | 'danger'
 
 const SECTIONS: { id: Section; label: string; description: string; icon: React.ElementType }[] = [
-  { id: 'company',       label: 'Company',          description: 'Business info, branding & trade',       icon: Building2        },
-  { id: 'pricing',       label: 'Pricing Defaults', description: 'Markup, waste & labor rates',           icon: DollarSign       },
-  { id: 'pricebook',     label: 'Price Book',       description: 'Saved items for estimates',             icon: BookOpen         },
-  { id: 'payperiod',     label: 'Pay Period',        description: 'Pay cycle & schedule',                  icon: Calendar         },
-  { id: 'roles',         label: 'Roles & Access',   description: 'Edit permissions per role',             icon: Shield           },
-  { id: 'dashboard',     label: 'Dashboard',        description: 'Control what each role sees',           icon: LayoutDashboard  },
-  { id: 'notifications', label: 'Notifications',    description: 'Email & push preferences',              icon: Bell             },
-  { id: 'subscription',  label: 'Subscription',     description: 'Plan & billing',                        icon: CreditCard       },
-  { id: 'danger',        label: 'Danger Zone',      description: 'Account & data management',             icon: AlertTriangle    },
+  { id: 'company',       label: 'Company',            description: 'Business info, branding & trade',       icon: Building2       },
+  { id: 'pricing',       label: 'Pricing Defaults',   description: 'Markup, waste & labor rates',           icon: DollarSign      },
+  { id: 'pricebook',     label: 'Price Book',         description: 'Saved items for estimates',             icon: BookOpen        },
+  { id: 'contracts',     label: 'Contract Templates', description: 'Reusable templates for client contracts', icon: FileSignature  },
+  { id: 'payperiod',     label: 'Pay Period',          description: 'Pay cycle & schedule',                  icon: Calendar        },
+  { id: 'roles',         label: 'Roles & Access',     description: 'Edit permissions per role',             icon: Shield          },
+  { id: 'dashboard',     label: 'Dashboard',          description: 'Control what each role sees',           icon: LayoutDashboard },
+  { id: 'notifications', label: 'Notifications',      description: 'Email & push preferences',              icon: Bell            },
+  { id: 'subscription',  label: 'Subscription',       description: 'Plan & billing',                        icon: CreditCard      },
+  { id: 'danger',        label: 'Danger Zone',        description: 'Account & data management',             icon: AlertTriangle   },
 ]
 
 export default function SettingsPage() {
   const { settings, setSettings, saveSettings } = useSettings()
-  const { user } = useAuth()
+  const { user, refreshPermissions } = useAuth()
   const [activeSection, setActiveSection] = useState<Section | null>(null)
   const [saved, setSaved] = useState(false)
+  const [setupName, setSetupName] = useState('')
+  const [setupUserName, setSetupUserName] = useState(user?.name || '')
+  const [setupLoading, setSetupLoading] = useState(false)
+  const [setupError, setSetupError] = useState('')
+
+  async function handleOrgSetup(e: React.FormEvent) {
+    e.preventDefault()
+    if (!setupName.trim() || !setupUserName.trim()) return
+    setSetupLoading(true)
+    setSetupError('')
+    const { error } = await supabase.rpc('setup_organization', {
+      p_org_name: setupName.trim(),
+      p_user_name: setupUserName.trim(),
+    })
+    if (error) {
+      setSetupError(error.message)
+      setSetupLoading(false)
+      return
+    }
+    localStorage.removeItem('nexus_onboarding_skipped')
+    await refreshPermissions()
+    setSetupLoading(false)
+  }
   const [subAdminCanInvite, setSubAdminCanInvite] = useState(true)
   const [accessSaved, setAccessSaved] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -138,6 +163,22 @@ export default function SettingsPage() {
           <h2 className="text-2xl font-bold text-white">Settings</h2>
           <p className="text-zinc-400 text-sm mt-1">Manage your company, team, and preferences.</p>
         </div>
+
+        {!user?.org_id && (
+          <div className="bg-amber-950/30 border border-amber-800/50 rounded-xl p-4 flex items-center gap-4">
+            <div className="p-2 rounded-lg bg-amber-900/50 text-amber-400 shrink-0">
+              <Building2 size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-amber-300 font-medium text-sm">Company not set up</p>
+              <p className="text-amber-700 text-xs mt-0.5">Finish setup to unlock all features.</p>
+            </div>
+            <Button size="sm" onClick={() => setActiveSection('company')} className="bg-stone-500 hover:bg-stone-400 text-white shrink-0">
+              Finish Setup
+            </Button>
+          </div>
+        )}
+
         <div className="space-y-2">
           {SECTIONS.map(({ id, label, description, icon: Icon }) => (
             <button
@@ -193,6 +234,50 @@ export default function SettingsPage() {
 
   // ── Company ──────────────────────────────────────────────────────────────
   if (activeSection === 'company') {
+    if (!user?.org_id) {
+      return (
+        <div className="max-w-2xl mx-auto">
+          <SectionHeader />
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
+            <div>
+              <h3 className="text-white font-semibold">Set Up Your Company</h3>
+              <p className="text-zinc-500 text-sm mt-1">This only takes a moment.</p>
+            </div>
+            <form onSubmit={handleOrgSetup} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Your Name *</Label>
+                <Input
+                  value={setupUserName}
+                  onChange={e => setSetupUserName(e.target.value)}
+                  placeholder="John Smith"
+                  required
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Company Name *</Label>
+                <Input
+                  value={setupName}
+                  onChange={e => setSetupName(e.target.value)}
+                  placeholder="Acme Services LLC"
+                  required
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+                />
+              </div>
+              {setupError && <p className="text-red-400 text-sm">{setupError}</p>}
+              <Button
+                type="submit"
+                disabled={!setupName.trim() || !setupUserName.trim() || setupLoading}
+                className="w-full bg-stone-500 hover:bg-stone-400 text-white font-semibold h-11"
+              >
+                {setupLoading ? 'Setting up…' : 'Create Company →'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="max-w-2xl mx-auto">
         <SectionHeader />
@@ -351,6 +436,11 @@ export default function SettingsPage() {
   // ── Price Book ───────────────────────────────────────────────────────────
   if (activeSection === 'pricebook') {
     return <PriceBookSection onBack={() => setActiveSection(null)} />
+  }
+
+  // ── Contract Templates ───────────────────────────────────────────────────
+  if (activeSection === 'contracts') {
+    return <ContractTemplateSection onBack={() => setActiveSection(null)} />
   }
 
   // ── Pay Period ───────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -9,6 +10,7 @@ import { ClientsProvider } from './context/ClientsContext'
 import { EstimatesProvider } from './context/EstimatesContext'
 import { PreferencesProvider } from './context/PreferencesContext'
 import { PriceBookProvider } from './context/PriceBookContext'
+import { ContractsProvider } from './context/ContractsContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
@@ -26,14 +28,29 @@ import SettingsPage from './pages/SettingsPage'
 import AccountPage from './pages/AccountPage'
 import ApprovePage from './pages/ApprovePage'
 import MessagesPage from './pages/MessagesPage'
+import SignContractPage from './pages/SignContractPage'
+import OnboardingPage from './pages/OnboardingPage'
 
 function AppRoutes() {
-  const { session, loading, can } = useAuth()
+  const { session, loading, user, can } = useAuth()
+  const [skipped, setSkipped] = useState(() => !!localStorage.getItem('nexus_onboarding_skipped'))
+
+  function handleSkip() {
+    localStorage.setItem('nexus_onboarding_skipped', '1')
+    setSkipped(true)
+  }
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <p className="text-zinc-400">Loading...</p>
+      <div className="w-8 h-8 rounded-full border-2 border-zinc-700 border-t-stone-400 animate-spin" />
     </div>
+  )
+
+  if (session && !user?.org_id && !skipped) return (
+    <Routes>
+      <Route path="/sign/:token" element={<SignContractPage />} />
+      <Route path="*" element={<OnboardingPage onSkip={handleSkip} />} />
+    </Routes>
   )
 
   if (!session) return (
@@ -42,6 +59,7 @@ function AppRoutes() {
       <Route path="/invite" element={<AcceptInvitePage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/approve/:token" element={<ApprovePage />} />
+      <Route path="/sign/:token" element={<SignContractPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
@@ -50,6 +68,7 @@ function AppRoutes() {
     <PreferencesProvider>
     <SettingsProvider>
     <PriceBookProvider>
+    <ContractsProvider>
     <ClientsProvider>
     <EstimatesProvider>
     <JobsProvider>
@@ -66,7 +85,7 @@ function AppRoutes() {
           <Route path="/clients/:clientId" element={can('view:clients') ? <ClientProfilePage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/jobs" element={can('view:jobs:all') || can('view:jobs:assigned') ? <JobsPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/jobs/:jobId" element={can('view:jobs:all') || can('view:jobs:assigned') ? <JobDetailPage /> : <Navigate to="/dashboard" replace />} />
-          <Route path="/estimates" element={can('manage:estimates') ? <EstimatesPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/estimates" element={can('view:estimates') ? <EstimatesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/messages" element={can('view:messages') ? <MessagesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/employees" element={can('view:employees') ? <EmployeesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/employees/:id" element={can('view:employees') ? <EmployeeProfilePage /> : <Navigate to="/dashboard" replace />} />
@@ -74,6 +93,7 @@ function AppRoutes() {
           <Route path="/account" element={<AccountPage />} />
         </Route>
         <Route path="/approve/:token" element={<ApprovePage />} />
+        <Route path="/sign/:token" element={<SignContractPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </EmployeeProvider>
@@ -81,6 +101,7 @@ function AppRoutes() {
     </JobsProvider>
     </EstimatesProvider>
     </ClientsProvider>
+    </ContractsProvider>
     </PriceBookProvider>
     </SettingsProvider>
     </PreferencesProvider>

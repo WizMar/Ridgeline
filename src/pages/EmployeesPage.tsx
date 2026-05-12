@@ -120,8 +120,12 @@ export default function EmployeesPage() {
   async function handleSave() {
     if (!form.name) return
     if (editTarget) {
-      await updateEmployee({ ...editTarget, ...form })
+      const err = await updateEmployee({ ...editTarget, ...form })
+      if (err) { toast.error(`Failed to update: ${err}`); return }
       toast.success('Employee updated')
+      if (editTarget.role !== form.role && form.email) {
+        toast.info('Role change will take effect on their next login.')
+      }
     } else {
       await addEmployee(form)
       toast.success('Employee added')
@@ -132,13 +136,15 @@ export default function EmployeesPage() {
   async function toggleStatus(id: string) {
     const emp = employees.find(e => e.id === id)
     if (!emp) return
-    await updateEmployee({ ...emp, status: emp.status === 'Active' ? 'Inactive' : 'Active' })
+    const err = await updateEmployee({ ...emp, status: emp.status === 'Active' ? 'Inactive' : 'Active' })
+    if (err) toast.error(`Failed: ${err}`)
   }
 
   async function archiveEmployee(id: string) {
     const emp = employees.find(e => e.id === id)
     if (!emp) return
-    await updateEmployee({ ...emp, status: 'Archived' })
+    const err = await updateEmployee({ ...emp, status: 'Archived' })
+    if (err) toast.error(`Failed: ${err}`)
   }
 
   async function handleDelete(id: string) {

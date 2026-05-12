@@ -5,16 +5,19 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 
-type Mode = 'login' | 'create-org' | 'forgot-password'
+type Mode = 'login' | 'signup' | 'forgot-password'
 
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [orgName, setOrgName] = useState('')
-  const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
+
+  function switchMode(m: Mode) {
+    setMode(m)
+    setMessage(null)
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -25,46 +28,16 @@ export default function LoginPage() {
     setLoading(false)
   }
 
-  async function handleCreateOrg(e: React.FormEvent) {
+  async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
-
-    // 1. Sign up the user
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
-    if (signUpError || !data.user) {
-      setMessage({ text: signUpError?.message ?? 'Sign up failed', type: 'error' })
-      setLoading(false)
-      return
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setMessage({ text: error.message, type: 'error' })
+    } else {
+      setMessage({ text: 'Check your email to confirm your account, then come back to sign in.', type: 'success' })
     }
-
-    const userId = data.user.id
-
-    // 2. Create the organization
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({ name: orgName, owner_id: userId, sub_admin_can_invite: true })
-      .select()
-      .single()
-
-    if (orgError || !org) {
-      setMessage({ text: orgError?.message ?? 'Failed to create organization', type: 'error' })
-      setLoading(false)
-      return
-    }
-
-    // 3. Create the admin profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({ id: userId, name: fullName, role: 'Admin', org_id: org.id })
-
-    if (profileError) {
-      setMessage({ text: profileError.message, type: 'error' })
-      setLoading(false)
-      return
-    }
-
-    setMessage({ text: 'Organization created! Check your email to confirm your account.', type: 'success' })
     setLoading(false)
   }
 
@@ -83,13 +56,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Logo */}
-        <div className="text-center flex flex-col items-center gap-3">
+
+        <div className="text-center">
           <h1 className="text-4xl font-bold text-white tracking-tight">Nexus</h1>
         </div>
 
         <Card className="bg-zinc-900 border-zinc-800">
-          {/* LOGIN */}
+
+          {/* SIGN IN */}
           {mode === 'login' && (
             <>
               <CardHeader>
@@ -99,141 +73,86 @@ export default function LoginPage() {
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-zinc-300">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
+                    <Label className="text-zinc-300">Email</Label>
+                    <Input type="email" placeholder="you@example.com" value={email}
+                      onChange={e => setEmail(e.target.value)} required
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-zinc-300">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
+                    <Label className="text-zinc-300">Password</Label>
+                    <Input type="password" placeholder="••••••••" value={password}
+                      onChange={e => setPassword(e.target.value)} required
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-stone-300'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
                       {message.text}
                     </p>
                   )}
 
                   <Button type="submit" className="w-full bg-stone-500 hover:bg-stone-400 text-white" disabled={loading}>
-                    {loading ? 'Signing in...' : 'Sign In'}
+                    {loading ? 'Signing in…' : 'Sign In'}
                   </Button>
 
-                  <Button
-                    variant="link"
-                    className="w-full text-zinc-400 hover:text-white"
-                    type="button"
-                    onClick={() => { setMode('forgot-password'); setMessage(null) }}
-                  >
+                  <button type="button" onClick={() => switchMode('forgot-password')}
+                    className="w-full text-center text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
                     Forgot password?
-                  </Button>
+                  </button>
                 </form>
 
-                <div className="mt-4 pt-4 border-t border-zinc-800 text-center text-sm text-zinc-500">
-                  Starting a new company on Nexus?{' '}
-                  <button
-                    onClick={() => { setMode('create-org'); setMessage(null) }}
-                    className="text-stone-400 hover:text-stone-300 font-medium"
-                  >
-                    Create your organization
+                <div className="mt-5 pt-5 border-t border-zinc-800 text-center text-sm text-zinc-500">
+                  New to Nexus?{' '}
+                  <button onClick={() => switchMode('signup')}
+                    className="text-stone-400 hover:text-stone-300 font-medium transition-colors">
+                    Create your company
                   </button>
                 </div>
               </CardContent>
             </>
           )}
 
-          {/* CREATE ORGANIZATION */}
-          {mode === 'create-org' && (
+          {/* SIGN UP */}
+          {mode === 'signup' && (
             <>
               <CardHeader>
-                <CardTitle className="text-white">Create Your Organization</CardTitle>
+                <CardTitle className="text-white">Create Your Account</CardTitle>
                 <CardDescription className="text-zinc-400">
-                  You'll be the Admin. Invite your team from the app.
+                  You'll set up your company after confirming your email.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCreateOrg} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="orgName" className="text-zinc-300">Company Name</Label>
-                    <Input
-                      id="orgName"
-                      type="text"
-                      placeholder="Acme Roofing"
-                      value={orgName}
-                      onChange={e => setOrgName(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
+                    <Label className="text-zinc-300">Email</Label>
+                    <Input type="email" placeholder="you@example.com" value={email}
+                      onChange={e => setEmail(e.target.value)} required
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-zinc-300">Your Name</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="John Smith"
-                      value={fullName}
-                      onChange={e => setFullName(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email2" className="text-zinc-300">Email</Label>
-                    <Input
-                      id="email2"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password2" className="text-zinc-300">Password</Label>
-                    <Input
-                      id="password2"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
+                    <Label className="text-zinc-300">Password</Label>
+                    <Input type="password" placeholder="Min. 6 characters" value={password}
+                      onChange={e => setPassword(e.target.value)} required minLength={6}
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-stone-300'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-stone-500 hover:bg-stone-400 text-white" disabled={loading}>
-                    {loading ? 'Creating...' : 'Create Organization'}
-                  </Button>
+                  {!message && (
+                    <Button type="submit" className="w-full bg-stone-500 hover:bg-stone-400 text-white" disabled={loading}>
+                      {loading ? 'Creating account…' : 'Create Account'}
+                    </Button>
+                  )}
                 </form>
 
-                <div className="mt-4 text-center text-sm text-zinc-400">
+                <div className="mt-5 pt-5 border-t border-zinc-800 text-center text-sm text-zinc-500">
                   Already have an account?{' '}
-                  <button
-                    onClick={() => { setMode('login'); setMessage(null) }}
-                    className="text-stone-400 hover:text-stone-300 font-medium"
-                  >
+                  <button onClick={() => switchMode('login')}
+                    className="text-stone-400 hover:text-stone-300 font-medium transition-colors">
                     Sign In
                   </button>
                 </div>
@@ -247,46 +166,41 @@ export default function LoginPage() {
               <CardHeader>
                 <CardTitle className="text-white">Reset Password</CardTitle>
                 <CardDescription className="text-zinc-400">
-                  Enter your email and we'll send you a reset link.
+                  We'll send a reset link to your email.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reset-email" className="text-zinc-300">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      required
-                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
-                    />
+                    <Label className="text-zinc-300">Email</Label>
+                    <Input type="email" placeholder="you@example.com" value={email}
+                      onChange={e => setEmail(e.target.value)} required
+                      className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500" />
                   </div>
 
                   {message && (
-                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-stone-300'}`}>
+                    <p className={`text-sm ${message.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
                       {message.text}
                     </p>
                   )}
 
-                  <Button type="submit" className="w-full bg-stone-500 hover:bg-stone-400 text-white" disabled={loading}>
-                    {loading ? 'Sending...' : 'Send Reset Link'}
-                  </Button>
+                  {!message && (
+                    <Button type="submit" className="w-full bg-stone-500 hover:bg-stone-400 text-white" disabled={loading}>
+                      {loading ? 'Sending…' : 'Send Reset Link'}
+                    </Button>
+                  )}
                 </form>
 
-                <div className="mt-4 text-center text-sm text-zinc-400">
-                  <button
-                    onClick={() => { setMode('login'); setMessage(null) }}
-                    className="text-stone-400 hover:text-stone-300 font-medium"
-                  >
+                <div className="mt-5 text-center">
+                  <button onClick={() => switchMode('login')}
+                    className="text-sm text-stone-400 hover:text-stone-300 transition-colors">
                     Back to Sign In
                   </button>
                 </div>
               </CardContent>
             </>
           )}
+
         </Card>
       </div>
     </div>

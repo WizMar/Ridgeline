@@ -19,7 +19,7 @@ export default function Layout() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800 shrink-0 sticky top-0 z-30">
+        <header className="md:hidden flex items-center justify-between px-4 bg-zinc-900 border-b border-zinc-800 shrink-0 sticky top-0 z-30" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)', paddingBottom: '12px' }}>
           <div className="flex items-center gap-2.5">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" className="h-7 w-7 rounded object-contain bg-white/5 p-0.5 shrink-0" />

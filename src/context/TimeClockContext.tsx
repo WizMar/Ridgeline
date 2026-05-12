@@ -28,9 +28,9 @@ function toEntry(row: Record<string, unknown>): TimeEntry {
     currentLocation: null,
     locationUpdatedAt: null,
     status: (row.status as TimeEntry['status']) ?? 'completed',
-    editRequest: null,
-    editedClockIn: null,
-    editedClockOut: null,
+    editRequest: (row.edit_request as string) ?? null,
+    editedClockIn: (row.edited_clock_in as string) ?? null,
+    editedClockOut: (row.edited_clock_out as string) ?? null,
     date: (row.date as string) ?? '',
   }
 }
@@ -88,6 +88,9 @@ export function TimeClockProvider({ children }: { children: React.ReactNode }) {
       status: updated.status,
       gps_in: updated.clockInLocation,
       gps_out: updated.clockOutLocation,
+      edit_request: updated.editRequest,
+      edited_clock_in: updated.editedClockIn,
+      edited_clock_out: updated.editedClockOut,
     }).eq('id', updated.id)
     if (!error) setEntries(prev => prev.map(e => e.id === updated.id ? updated : e))
   }

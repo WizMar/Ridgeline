@@ -82,10 +82,13 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       notes: job.notes,
       scope: job.scope,
       scheduled_date: job.scheduledDate || null,
+      approval_required: false,
+      approval_status: 'none',
       client_id: job.clientId || null,
       property_id: job.propertyId || null,
     }).select().single()
     if (data && !error) { setJobs(prev => [toJob(data), ...prev]); return true }
+    console.error('[addJob]', error?.message, error?.details)
     return false
   }
 

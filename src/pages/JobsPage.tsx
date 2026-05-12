@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useJobs } from '@/context/JobsContext'
 import { useEmployees } from '@/context/EmployeeContext'
+import { useAuth } from '@/context/AuthContext'
 import { usePreferences, formatDate } from '@/context/PreferencesContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,10 +16,13 @@ import {
 } from '@/components/ui/select'
 import {
   type Job, type JobStatus, type JobType,
-  JOB_STATUSES, JOB_TYPES, STATUS_BADGE, STATUS_BORDER,
+  JOB_TYPES, STATUS_BADGE, STATUS_BORDER,
 } from '@/types/job'
 import { toast } from 'sonner'
-import { Briefcase } from 'lucide-react'
+import { Briefcase, Archive } from 'lucide-react'
+
+const ACTIVE_STATUSES: JobStatus[] = ['Active', 'Scheduled', 'Completed', 'Invoiced', 'Draft']
+const ARCHIVED_STATUSES: JobStatus[] = ['Paid', 'Cancelled', 'Written Off']
 
 function newJob(): Job {
   return {
@@ -50,22 +54,35 @@ export default function JobsPage() {
   const navigate = useNavigate()
   const { jobs, addJob } = useJobs()
   const { employees } = useEmployees()
+  const { user, can } = useAuth()
   const { prefs } = usePreferences()
 
   const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState<JobStatus | 'All'>('All')
+  const [filterStatus, setFilterStatus] = useState<JobStatus>('Active')
+  const [showArchive, setShowArchive] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [draft, setDraft] = useState<Job>(newJob())
 
   const leads = employees.filter(e => e.status === 'Active' && (e.role === 'Admin' || e.role === 'Sub-Admin' || e.role === 'Project Manager' || e.role === 'Lead' || e.role === 'Sales'))
   const crew = employees.filter(e => e.status === 'Active')
 
-  const filtered = jobs.filter(j => {
+  const myEmployee = employees.find(e => e.email === user?.email)
+  const assignedOnly = !can('view:jobs:all')
+  const isAdmin = can('view:jobs:all')
+
+  const visibleJobs = assignedOnly && myEmployee
+    ? jobs.filter(j => j.leadId === myEmployee.id || j.crewIds.includes(myEmployee.id))
+    : jobs
+
+  const modeStatuses = showArchive ? ARCHIVED_STATUSES : ACTIVE_STATUSES
+  const modeJobs = visibleJobs.filter(j => modeStatuses.includes(j.status))
+
+  const filtered = modeJobs.filter(j => {
     const matchSearch = !search ||
       j.title.toLowerCase().includes(search.toLowerCase()) ||
       j.client.name.toLowerCase().includes(search.toLowerCase()) ||
       j.address.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = filterStatus === 'All' || j.status === filterStatus
+    const matchStatus = j.status === filterStatus
     return matchSearch && matchStatus
   })
 
@@ -81,7 +98,7 @@ export default function JobsPage() {
       toast.success('Job created')
       setDialogOpen(false)
     } else {
-      toast.error('Failed to create job. Please try again.')
+      toast.error('Failed to create job — check your connection and try again.')
     }
   }
 
@@ -97,8 +114,8 @@ export default function JobsPage() {
   const empName = (id: string | null) =>
     id ? (employees.find(e => e.id === id)?.name ?? 'Unknown') : '—'
 
-  const statusCounts = JOB_STATUSES.reduce((acc, s) => {
-    acc[s] = jobs.filter(j => j.status === s).length
+  const statusCounts = modeStatuses.reduce((acc, s) => {
+    acc[s] = modeJobs.filter(j => j.status === s).length
     return acc
   }, {} as Record<JobStatus, number>)
 
@@ -122,27 +139,46 @@ export default function JobsPage() {
           <h2 className="text-xl md:text-2xl font-bold text-white">Jobs</h2>
           <p className="hidden md:block text-zinc-400 text-sm mt-1">Manage your active and upcoming jobs.</p>
         </div>
-        <Button onClick={openCreate} className="bg-stone-500 hover:bg-stone-400 text-white">
-          + New Job
-        </Button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => { setShowArchive(s => { const next = !s; setFilterStatus(next ? 'Paid' : 'Active'); return next }) }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                showArchive
+                  ? 'border-amber-700 bg-amber-900/30 text-amber-400'
+                  : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <Archive size={13} />
+              {showArchive ? 'Viewing Archive' : 'Archive'}
+            </button>
+          )}
+          {!showArchive && (
+            <Button onClick={openCreate} className="bg-stone-500 hover:bg-stone-400 text-white">
+              + New Job
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Status Filter */}
-      <div className="flex flex-wrap gap-2">
-        {(['All', ...JOB_STATUSES] as const).map(s => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-              filterStatus === s
-                ? 'bg-stone-500 border-stone-500 text-white'
-                : 'border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            {s} {s !== 'All' && statusCounts[s] > 0 && `(${statusCounts[s]})`}
-          </button>
-        ))}
-      </div>
+      {/* Status Tabs */}
+      {modeStatuses.length > 1 && (
+        <div className="flex border-b border-zinc-800">
+          {modeStatuses.map(s => (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                filterStatus === s
+                  ? 'border-stone-500 text-white'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {s} {statusCounts[s] > 0 && <span className="ml-1 text-xs opacity-60">({statusCounts[s]})</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <Input
@@ -158,9 +194,11 @@ export default function JobsPage() {
           <CardContent className="py-10 flex flex-col items-center gap-3 text-center">
             <Briefcase className="w-10 h-10 text-zinc-600" strokeWidth={1.5} />
             <p className="text-zinc-500 text-sm">
-              {jobs.length === 0 ? 'No jobs yet.' : 'No jobs match your search.'}
+              {modeJobs.length === 0
+                ? showArchive ? 'No archived jobs yet.' : assignedOnly ? 'No jobs assigned to you yet.' : 'No jobs yet.'
+                : 'No jobs match your search.'}
             </p>
-            {jobs.length === 0 && (
+            {modeJobs.length === 0 && !assignedOnly && !showArchive && (
               <Button onClick={openCreate} className="bg-stone-500 hover:bg-stone-400 text-white mt-1">
                 + Create First Job
               </Button>
@@ -245,7 +283,7 @@ export default function JobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    {JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {(['Draft', 'Scheduled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

@@ -225,7 +225,7 @@ export default function ClientProfilePage() {
         <div>
           <p className="text-zinc-500 text-xs">Active Jobs</p>
           <p className="text-white font-semibold text-lg">
-            {clientJobs.filter(j => j.status === 'In Progress' || j.status === 'Scheduled').length}
+            {clientJobs.filter(j => j.status === 'Active' || j.status === 'Scheduled').length}
           </p>
         </div>
       </div>

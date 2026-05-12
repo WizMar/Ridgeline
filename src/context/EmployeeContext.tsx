@@ -7,7 +7,7 @@ type EmployeeContextType = {
   employees: Employee[]
   loading: boolean
   addEmployee: (emp: Omit<Employee, 'id'>) => Promise<void>
-  updateEmployee: (updated: Employee) => Promise<void>
+  updateEmployee: (updated: Employee) => Promise<string | null>
   deleteEmployee: (id: string) => Promise<void>
   setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>
 }
@@ -74,7 +74,7 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
     if (data && !error) setEmployees(prev => [...prev, toEmployee(data)])
   }
 
-  async function updateEmployee(updated: Employee) {
+  async function updateEmployee(updated: Employee): Promise<string | null> {
     const { error } = await supabase.from('employees').update({
       name: updated.name,
       phone: updated.phone,
@@ -89,13 +89,13 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       notes: updated.notes,
       profile_picture: updated.profilePicture,
     }).eq('id', updated.id)
-    if (!error) {
-      setEmployees(prev => prev.map(e => e.id === updated.id ? updated : e))
-      // Sync role to profiles so auth permissions update immediately
-      if (updated.email) {
-        await supabase.rpc('update_member_role', { p_email: updated.email, p_role: updated.role })
-      }
+    if (error) return error.message
+    setEmployees(prev => prev.map(e => e.id === updated.id ? updated : e))
+    if (updated.email) {
+      const { error: rpcError } = await supabase.rpc('update_member_role', { p_email: updated.email, p_role: updated.role })
+      if (rpcError) return rpcError.message
     }
+    return null
   }
 
   async function deleteEmployee(id: string) {

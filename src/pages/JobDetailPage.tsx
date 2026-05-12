@@ -6,6 +6,9 @@ import { useEmployees } from '@/context/EmployeeContext'
 import { useAuth } from '@/context/AuthContext'
 import { usePreferences, formatDate } from '@/context/PreferencesContext'
 import { useJobMedia, type MediaCategory } from '@/hooks/useJobMedia'
+import { useContracts } from '@/context/ContractsContext'
+import { useSettings } from '@/context/SettingsContext'
+import { fillPlaceholders, CONTRACT_STATUS_BADGE } from '@/types/contract'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,16 +17,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
-  ChevronLeft, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText,
+  ChevronLeft, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText, FileSignature, Download,
 } from 'lucide-react'
 import {
   type Job, type JobStatus, type JobType,
   JOB_STATUSES, JOB_TYPES, STATUS_BADGE,
 } from '@/types/job'
-import { useSettings } from '@/context/SettingsContext'
 import JobEstimateSection from '@/components/JobEstimateSection'
 
-type Tab = 'overview' | 'photos' | 'estimate' | 'approval'
+type Tab = 'overview' | 'photos' | 'estimate' | 'approval' | 'contract'
 
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>()
@@ -40,7 +42,13 @@ export default function JobDetailPage() {
   const property = job?.propertyId ? properties.find(p => p.id === job.propertyId) : null
 
   const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const isFieldWorker = user?.role === 'Employee' || user?.role === 'Subcontractor'
   const canRequestApproval = isAdmin || user?.role === 'Project Manager' || user?.role === 'Lead'
+
+  const myEmployee = employees.find(e => e.email === user?.email)
+  const isAssigned = myEmployee
+    ? job?.leadId === myEmployee.id || job?.crewIds.includes(myEmployee.id)
+    : false
 
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [editOpen, setEditOpen] = useState(false)
@@ -53,8 +61,15 @@ export default function JobDetailPage() {
 
   const { media, loading: mediaLoading, uploading, uploadMedia, deleteMedia } = useJobMedia(job?.id ?? null)
   const categoryMedia = media.filter(m => m.category === activeCategory)
+  const { templates, contracts, addContract, sendContract, voidContract } = useContracts()
+  const [contractDraftOpen, setContractDraftOpen] = useState(false)
+  const [contractTemplateId, setContractTemplateId] = useState<string>('')
+  const [contractTitle, setContractTitle] = useState('')
+  const [contractBody, setContractBody] = useState('')
+  const [contractCopied, setContractCopied] = useState(false)
 
   if (!job) return <Navigate to="/jobs" replace />
+  if (isFieldWorker && !isAssigned) return <Navigate to="/jobs" replace />
   const j: Job = job
 
   const empName = (id: string | null) =>
@@ -131,9 +146,126 @@ export default function JobDetailPage() {
   const TABS: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'photos', label: `Photos${media.length > 0 ? ` (${media.length})` : ''}` },
-    { key: 'estimate', label: 'Estimate' },
-    { key: 'approval', label: 'Approval' },
+    ...(!isFieldWorker ? [
+      { key: 'estimate' as Tab, label: 'Estimate' },
+      { key: 'approval' as Tab, label: 'Approval' },
+      { key: 'contract' as Tab, label: 'Contract' },
+    ] : []),
   ]
+
+  const jobContract = contracts.find(c => c.jobId === j.id && c.status !== 'voided')
+
+  function handleTemplateSelect(templateId: string) {
+    setContractTemplateId(templateId)
+    const tpl = templates.find(t => t.id === templateId)
+    if (!tpl) return
+    const companyName = settings.company?.name || 'Our Company'
+    setContractTitle(tpl.name)
+    setContractBody(fillPlaceholders(tpl.body, j, companyName))
+  }
+
+  async function handleCreateContract() {
+    if (!contractTitle.trim() || !contractBody.trim()) return
+    const result = await addContract({
+      jobId: j.id,
+      templateId: contractTemplateId || null,
+      title: contractTitle,
+      body: contractBody,
+    })
+    if (result) { toast.success('Contract created'); setContractDraftOpen(false) }
+    else toast.error('Failed to create contract')
+  }
+
+  async function handleSendContract(contractId: string) {
+    await sendContract(contractId)
+    toast.success('Contract sent — share the signing link with your client')
+  }
+
+  async function handleVoidContract(contractId: string) {
+    await voidContract(contractId)
+    toast.success('Contract voided')
+  }
+
+  function copySignLink(token: string) {
+    navigator.clipboard.writeText(`${window.location.origin}/sign/${token}`)
+    setContractCopied(true)
+    setTimeout(() => setContractCopied(false), 2000)
+  }
+
+  function downloadJobReport() {
+    const companyName = settings.company?.name || 'Nexus'
+    const leadName = j.leadId ? empName(j.leadId) : 'Unassigned'
+    const crewNames = j.crewIds.length ? j.crewIds.map(id => empName(id)).join(', ') : 'None'
+    const contract = contracts.find(c => c.jobId === j.id && c.status !== 'voided')
+
+    const contractSection = contract ? `
+      <h2>Contract: ${contract.title}</h2>
+      ${contract.status === 'signed' ? `
+        <div class="signed-banner">
+          Signed by <strong>${contract.signerName}</strong>
+          ${contract.signedAt ? ` &middot; ${new Date(contract.signedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}
+        </div>` : `<p class="meta">Status: ${contract.status}</p>`}
+      <div class="contract-box"><pre>${contract.body}</pre></div>
+    ` : ''
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${j.title} — Job Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 760px; margin: 40px auto; color: #111; padding: 0 24px 60px; }
+    .header-meta { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .badge { display: inline-block; background: #f3f4f6; border-radius: 9999px; padding: 2px 10px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+    h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+    .field label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 2px; }
+    .field p { font-size: 13px; }
+    pre { white-space: pre-wrap; font-family: inherit; font-size: 13px; line-height: 1.7; color: #374151; }
+    .meta { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+    .signed-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #15803d; margin-bottom: 14px; }
+    .contract-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
+    @media print { body { margin: 20px auto; } }
+  </style>
+</head>
+<body>
+  <div class="header-meta">
+    <span>${companyName}</span>
+    <span>Generated ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+  </div>
+  <h1>${j.title}<span class="badge">${j.status}</span></h1>
+  <p class="meta" style="margin-top:6px">${j.type}${j.scheduledDate ? ` &middot; Scheduled ${j.scheduledDate}` : ''}</p>
+
+  <h2>Client</h2>
+  <div class="grid">
+    <div class="field"><label>Name</label><p>${j.client.name || '—'}</p></div>
+    <div class="field"><label>Phone</label><p>${j.client.phone || '—'}</p></div>
+    <div class="field"><label>Email</label><p>${j.client.email || '—'}</p></div>
+    <div class="field"><label>Address</label><p>${j.address || '—'}</p></div>
+  </div>
+
+  <h2>Crew</h2>
+  <div class="grid">
+    <div class="field"><label>Lead</label><p>${leadName}</p></div>
+    <div class="field"><label>Crew</label><p>${crewNames}</p></div>
+  </div>
+
+  ${j.scope ? `<h2>Scope of Work</h2><pre>${j.scope}</pre>` : ''}
+  ${j.notes ? `<h2>Internal Notes</h2><pre>${j.notes}</pre>` : ''}
+  ${contractSection}
+
+  <script>window.onload = () => window.print()</script>
+</body>
+</html>`
+
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.documentElement.innerHTML = html
+      setTimeout(() => win.print(), 300)
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-5 text-white">
@@ -161,9 +293,14 @@ export default function JobDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={openEdit} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
-            <Pencil size={13} /> Edit
+          <Button variant="outline" size="sm" onClick={downloadJobReport} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
+            <Download size={13} /> Download
           </Button>
+          {!isFieldWorker && (
+            <Button variant="outline" size="sm" onClick={openEdit} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-1.5">
+              <Pencil size={13} /> Edit
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={() => setConfirmDelete(true)} className="border-red-800 text-red-400 hover:bg-red-900/30">
               <Trash2 size={13} />
@@ -309,8 +446,8 @@ export default function JobDetailPage() {
                   )}
                   {isAdmin && (
                     <button onClick={e => { e.stopPropagation(); deleteMedia(item) }}
-                      className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      <X size={10} />
+                      className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <X size={11} />
                     </button>
                   )}
                 </div>
@@ -402,6 +539,121 @@ export default function JobDetailPage() {
                 className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2">
                 Preview customer approval page
               </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Contract Tab */}
+      {activeTab === 'contract' && (
+        <div className="max-w-lg space-y-4">
+          {!jobContract ? (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+              <p className="text-zinc-300 text-sm font-semibold">Create Contract</p>
+              {templates.length === 0 ? (
+                <p className="text-zinc-500 text-sm">No templates yet. Go to <span className="text-stone-400">Settings → Contract Templates</span> to create one.</p>
+              ) : (
+                <>
+                  {!contractDraftOpen ? (
+                    <Button onClick={() => setContractDraftOpen(true)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5">
+                      <FileSignature size={14} /> Create Contract
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-zinc-400 text-xs">Template</Label>
+                        <Select value={contractTemplateId} onValueChange={handleTemplateSelect}>
+                          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Select a template…" /></SelectTrigger>
+                          <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {contractTemplateId && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-400 text-xs">Title</Label>
+                            <Input value={contractTitle} onChange={e => setContractTitle(e.target.value)}
+                              className="bg-zinc-800 border-zinc-700 text-white" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-zinc-400 text-xs">Body</Label>
+                            <textarea value={contractBody} onChange={e => setContractBody(e.target.value)} rows={10}
+                              className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-stone-500" />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setContractDraftOpen(false)}>Cancel</Button>
+                            <Button className="bg-stone-500 hover:bg-stone-400 text-white" onClick={handleCreateContract}
+                              disabled={!contractTitle.trim() || !contractBody.trim()}>
+                              Save Contract
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-zinc-300 text-sm font-semibold">{jobContract.title}</p>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${CONTRACT_STATUS_BADGE[jobContract.status]}`}>
+                  {jobContract.status.charAt(0).toUpperCase() + jobContract.status.slice(1)}
+                </span>
+              </div>
+
+              {jobContract.status === 'signed' && (
+                <div className="flex items-center gap-2 bg-emerald-900/20 border border-emerald-800 rounded-md px-3 py-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-emerald-300 text-xs font-medium">Signed by {jobContract.signerName}</p>
+                    {jobContract.signedAt && (
+                      <p className="text-emerald-700 text-xs">{new Date(jobContract.signedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {jobContract.status === 'sent' && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
+                    <Send size={12} className="text-blue-400 shrink-0" />
+                    <p className="text-blue-300 text-xs">Awaiting client signature</p>
+                  </div>
+                  <button onClick={() => copySignLink(jobContract.signToken)}
+                    className="w-full flex items-center justify-between gap-2 bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 transition-colors">
+                    <span className="truncate font-mono">{`${window.location.origin}/sign/${jobContract.signToken}`}</span>
+                    <span className="shrink-0 flex items-center gap-1">
+                      {contractCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                      {contractCopied ? 'Copied!' : 'Copy'}
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {jobContract.status === 'draft' && (
+                <Button onClick={() => handleSendContract(jobContract.id)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5" size="sm">
+                  <Send size={13} /> Send for Signature
+                </Button>
+              )}
+
+              {(jobContract.status === 'draft' || jobContract.status === 'sent') && isAdmin && (
+                <button onClick={() => handleVoidContract(jobContract.id)}
+                  className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
+                  Void contract
+                </button>
+              )}
+
+              <div className="border-t border-zinc-800 pt-3">
+                <p className="text-zinc-500 text-xs mb-2">Contract Preview</p>
+                <pre className="text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap font-sans line-clamp-6">{jobContract.body}</pre>
+                <a href={`/sign/${jobContract.signToken}`} target="_blank" rel="noopener noreferrer"
+                  className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2 mt-2 inline-block">
+                  Preview signing page ↗
+                </a>
+              </div>
             </div>
           )}
         </div>
