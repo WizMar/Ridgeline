@@ -46,7 +46,7 @@ const NEXT_LABEL: Partial<Record<JobStatus, string>> = {
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>()
   const navigate = useNavigate()
-  const { jobs, updateJob, deleteJob, requestApproval } = useJobs()
+  const { jobs, loading: jobsLoading, updateJob, deleteJob, requestApproval } = useJobs()
   const { clients, properties } = useClients()
   const { employees } = useEmployees()
   const { user } = useAuth()
@@ -95,6 +95,7 @@ export default function JobDetailPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  if (jobsLoading) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-zinc-700 border-t-stone-400 animate-spin" /></div>
   if (!job) return <Navigate to="/jobs" replace />
   if (isFieldWorker && !isAssigned) return <Navigate to="/jobs" replace />
   const j: Job = job
