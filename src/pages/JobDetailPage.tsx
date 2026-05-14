@@ -8,7 +8,7 @@ import { usePreferences, formatDate } from '@/context/PreferencesContext'
 import { useJobMedia, type MediaCategory } from '@/hooks/useJobMedia'
 import { useContracts } from '@/context/ContractsContext'
 import { useSettings } from '@/context/SettingsContext'
-import { fillPlaceholders, CONTRACT_STATUS_BADGE } from '@/types/contract'
+import { fillPlaceholders, fillSections, CONTRACT_STATUS_BADGE, type Contract } from '@/types/contract'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -90,6 +90,7 @@ export default function JobDetailPage() {
   const [contractTemplateId, setContractTemplateId] = useState<string>('')
   const [contractTitle, setContractTitle] = useState('')
   const [contractBody, setContractBody] = useState('')
+  const [contractSections, setContractSections] = useState<Contract['sections']>(null)
   const [contractCopied, setContractCopied] = useState(false)
   const [statusPickerOpen, setStatusPickerOpen] = useState(false)
   const [inPersonOpen, setInPersonOpen] = useState(false)
@@ -218,6 +219,7 @@ export default function JobDetailPage() {
     const companyName = settings.company?.name || 'Our Company'
     setContractTitle(tpl.name)
     setContractBody(fillPlaceholders(tpl.body, j, companyName))
+    setContractSections(tpl.sections ? fillSections(tpl.sections, j, companyName) : null)
   }
 
   async function handleCreateContract() {
@@ -227,6 +229,7 @@ export default function JobDetailPage() {
       templateId: contractTemplateId || null,
       title: contractTitle,
       body: contractBody,
+      sections: contractSections,
     })
     if (result) { toast.success('Contract created'); setContractDraftOpen(false) }
     else toast.error('Failed to create contract')

@@ -228,7 +228,6 @@ export default function EmployeesPage() {
                       {emp.status === 'Active' ? 'Deactivate' : 'Activate'}
                     </button>
                     <button onClick={() => archiveEmployee(emp.id)} className="text-yellow-500 hover:text-yellow-400 text-xs">Archive</button>
-                    <button onClick={() => setConfirmDelete(emp.id)} className="text-red-500 hover:text-red-400 text-xs">Delete</button>
                   </div>
                 </div>
               ))}
@@ -390,11 +389,21 @@ export default function EmployeesPage() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">Cancel</Button>
-            <Button onClick={handleSave} className="bg-stone-500 hover:bg-stone-400 text-white">
-              {editTarget ? 'Save Changes' : 'Add Employee'}
-            </Button>
+          <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between gap-2">
+            <div>
+              {editTarget && (
+                <Button variant="ghost" className="text-red-500 hover:text-red-400 hover:bg-red-950/30 w-full sm:w-auto"
+                  onClick={() => { setOpen(false); setConfirmDelete(editTarget.id) }}>
+                  Delete Employee
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">Cancel</Button>
+              <Button onClick={handleSave} className="bg-stone-500 hover:bg-stone-400 text-white">
+                {editTarget ? 'Save Changes' : 'Add Employee'}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

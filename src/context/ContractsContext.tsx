@@ -12,7 +12,7 @@ type ContractsContextType = {
 
   contracts: Contract[]
   contractsLoading: boolean
-  addContract: (c: { jobId: string; templateId: string | null; title: string; body: string }) => Promise<Contract | null>
+  addContract: (c: { jobId: string; templateId: string | null; title: string; body: string; sections?: Contract['sections'] }) => Promise<Contract | null>
   updateContract: (c: Contract) => Promise<void>
   deleteContract: (id: string) => Promise<void>
   sendContract: (contractId: string) => Promise<void>
