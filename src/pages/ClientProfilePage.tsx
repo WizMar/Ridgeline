@@ -30,7 +30,7 @@ function blankJob(): Omit<Job, 'id' | 'createdAt' | 'updatedAt'> {
     notes: '', scope: '', scheduledDate: '',
     approvalRequired: false, approvalStatus: 'none',
     approvalRequestedAt: null, approvalToken: null, approvedAt: null, approverName: null,
-    clientId: null, propertyId: null,
+    clientId: null, propertyId: null, amount: null,
   }
 }
 
@@ -47,7 +47,7 @@ export default function ClientProfilePage() {
   const clientProperties = properties.filter(p => p.clientId === clientId)
   const clientJobs = jobs.filter(j => j.clientId === clientId)
 
-  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const isAdmin = user?.role === 'Admin' || user?.role === 'General Manager'
 
   // Edit client dialog
   const [editClientOpen, setEditClientOpen] = useState(false)
@@ -71,7 +71,7 @@ export default function ClientProfilePage() {
 
   const leads = employees.filter(e =>
     e.status === 'Active' &&
-    ['Admin', 'Sub-Admin', 'Project Manager', 'Lead', 'Sales'].includes(e.role)
+    ['Admin', 'General Manager', 'Project Manager', 'Lead', 'Sales'].includes(e.role)
   )
   const crew = employees.filter(e => e.status === 'Active')
 

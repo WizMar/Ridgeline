@@ -7,6 +7,7 @@ import { useTimeClock } from '@/context/TimeClockContext'
 import { useSettings, getPayPeriodRange, DEFAULT_DASHBOARD_VISIBILITY } from '@/context/SettingsContext'
 import { useJobs } from '@/context/JobsContext'
 import { useEstimates } from '@/context/EstimatesContext'
+import { calcEstimateTotal } from '@/types/estimate'
 import { useAuth } from '@/context/AuthContext'
 import { calcHours, fmtHours } from '@/types/timeclock'
 import { STATUS_COLORS, STATUS_BADGE, JOB_STATUSES } from '@/types/job'
@@ -73,6 +74,27 @@ export default function DashboardPage() {
     value: jobs.filter(j => j.status === s).length,
   }))
   const hasJobData = jobStatusData.some(d => d.value > 0)
+
+  const thisMonthCollected = (() => {
+    const now = new Date()
+    const estimateByJobId = new Map<string, number>()
+    for (const est of estimates) {
+      if (est.convertedJobId) estimateByJobId.set(est.convertedJobId, calcEstimateTotal(est).total)
+    }
+    return jobs
+      .filter(j => {
+        if (j.status !== 'Paid' || !j.updatedAt) return false
+        const d = new Date(j.updatedAt)
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+      })
+      .reduce((sum, j) => sum + (j.amount ?? estimateByJobId.get(j.id) ?? 0), 0)
+  })()
+
+  function fmtMoney(n: number): string {
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`
+    return `$${Math.round(n).toLocaleString('en-US')}`
+  }
 
   const vis = {
     ...DEFAULT_DASHBOARD_VISIBILITY,
@@ -375,7 +397,7 @@ export default function DashboardPage() {
     )
   }
 
-  // ─── Admin / Sub-Admin ──────────────────────────────────────────────────────
+  // ─── Admin / General Manager ──────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto space-y-6 text-white">
 
@@ -421,16 +443,16 @@ export default function DashboardPage() {
             <p className="text-zinc-600 text-xs mt-2">Working right now</p>
           </button>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 opacity-50 cursor-not-allowed">
+          <button onClick={() => navigate('/revenue')} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 hover:bg-zinc-800/50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/30 transition-all duration-200 text-left w-full">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest">Revenue</p>
+              <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-widest">Collected</p>
               <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                 <TrendingUp size={13} className="text-emerald-400" />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold text-zinc-700 tabular-nums leading-none">—</p>
-            <p className="text-zinc-700 text-xs mt-2">Coming soon</p>
-          </div>
+            <p className="text-2xl md:text-3xl font-bold text-white tabular-nums leading-none">{fmtMoney(thisMonthCollected)}</p>
+            <p className="text-zinc-600 text-xs mt-2">This month</p>
+          </button>
         </div>
       )}
 

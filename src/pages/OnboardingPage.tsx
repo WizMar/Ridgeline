@@ -13,7 +13,7 @@ const INDUSTRIES = [
 type Props = { onSkip?: () => void }
 
 export default function OnboardingPage({ onSkip }: Props) {
-  const { user, refreshPermissions } = useAuth()
+  const { user, refreshProfile } = useAuth()
   const [orgName, setOrgName] = useState('')
   const [userName, setUserName] = useState(user?.name || '')
   const [industry, setIndustry] = useState('')
@@ -37,8 +37,8 @@ export default function OnboardingPage({ onSkip }: Props) {
       return
     }
 
-    // Refresh auth so org_id and role are loaded
-    await refreshPermissions()
+    // Re-fetch profile so org_id is loaded and onboarding gate clears
+    await refreshProfile()
     setLoading(false)
   }
 

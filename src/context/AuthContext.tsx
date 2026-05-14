@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 
-export type UserRole = 'Employee' | 'Subcontractor' | 'Lead' | 'Project Manager' | 'Sales' | 'Sub-Admin' | 'Admin'
+export type UserRole = 'Employee' | 'Subcontractor' | 'Lead' | 'Project Manager' | 'Sales' | 'General Manager' | 'Admin'
 
 export type AuthUser = {
   id: string
@@ -31,6 +31,8 @@ export type Action =
   | 'create:clients'
   | 'manage:estimates'
   | 'view:messages'
+  | 'view:revenue'
+  | 'view:calendar'
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
   Subcontractor: [
@@ -38,12 +40,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:timeclock',
     'view:jobs:assigned',
     'view:messages',
+    'view:calendar',
   ],
   Employee: [
     'view:dashboard',
     'view:timeclock',
     'view:jobs:assigned',
     'view:messages',
+    'view:calendar',
   ],
   Lead: [
     'view:dashboard',
@@ -52,6 +56,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:jobs:all',
     'view:clients',
     'view:messages',
+    'view:calendar',
   ],
   'Project Manager': [
     'view:dashboard',
@@ -67,6 +72,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:clients',
     'create:clients',
     'view:messages',
+    'view:calendar',
   ],
   Sales: [
     'view:dashboard',
@@ -78,8 +84,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:estimates',
     'create:estimates',
     'view:messages',
+    'view:calendar',
   ],
-  'Sub-Admin': [
+  'General Manager': [
     'view:dashboard',
     'view:timeclock',
     'manage:timeclock',
@@ -96,6 +103,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:clients',
     'create:clients',
     'view:messages',
+    'view:revenue',
+    'view:calendar',
   ],
   Admin: [
     'view:dashboard',
@@ -116,6 +125,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Action[]> = {
     'view:messages',
     'view:clients',
     'create:clients',
+    'view:revenue',
+    'view:calendar',
   ],
 }
 
@@ -125,6 +136,7 @@ type AuthContextType = {
   loading: boolean
   can: (action: Action) => boolean
   refreshPermissions: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -156,6 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function refreshPermissions() {
     const orgId = userRef.current?.org_id
     if (orgId) await loadPermissions(orgId)
+  }
+
+  async function refreshProfile() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) await loadProfile(session)
   }
 
   async function loadProfile(session: import('@supabase/supabase-js').Session) {
@@ -206,6 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true)
       setSession(session)
       if (session) {
         await loadProfile(session)
@@ -226,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, can, refreshPermissions }}>
+    <AuthContext.Provider value={{ session, user, loading, can, refreshPermissions, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

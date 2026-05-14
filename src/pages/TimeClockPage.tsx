@@ -60,7 +60,7 @@ export default function TimeClockPage() {
 
   const isManager = can('manage:timeclock')
   const canApproveEdits = can('approve:edits')
-  const canSeeLiveView = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const canSeeLiveView = user?.role === 'Admin' || user?.role === 'General Manager'
 
   const myEmployee = employees.find(e => e.email === user?.email)
   const visibleEmployees = isManager ? employees.filter(e => e.status === 'Active') : (myEmployee ? [myEmployee] : [])

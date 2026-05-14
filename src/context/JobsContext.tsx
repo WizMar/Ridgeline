@@ -41,6 +41,7 @@ function toJob(row: Record<string, unknown>): Job {
     approverName: (row.approver_name as string) ?? null,
     clientId: (row.client_id as string) ?? null,
     propertyId: (row.property_id as string) ?? null,
+    amount: row.amount != null ? Number(row.amount) : null,
   }
 }
 
@@ -87,6 +88,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       approval_status: 'none',
       client_id: job.clientId || null,
       property_id: job.propertyId || null,
+      amount: job.amount ?? null,
     }).select().single()
     if (data && !error) { setJobs(prev => [toJob(data), ...prev]); return true }
     console.error('[addJob]', error?.message, error?.details)
@@ -115,6 +117,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       approver_name: job.approverName,
       client_id: job.clientId || null,
       property_id: job.propertyId || null,
+      amount: job.amount ?? null,
       updated_at: new Date().toISOString(),
     }).eq('id', job.id)
     if (!error) setJobs(prev => prev.map(j => j.id === job.id ? job : j))

@@ -165,7 +165,7 @@ export default function EmployeeProfilePage() {
                       <SelectItem value="Lead">Lead</SelectItem>
                       <SelectItem value="Project Manager">Project Manager</SelectItem>
                       <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Sub-Admin">Sub-Admin</SelectItem>
+                      <SelectItem value="General Manager">General Manager</SelectItem>
                       <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>

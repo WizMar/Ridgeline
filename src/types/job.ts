@@ -28,6 +28,7 @@ export type Job = {
   approverName: string | null
   clientId: string | null
   propertyId: string | null
+  amount: number | null
 }
 
 export const JOB_TYPES: JobType[] = [

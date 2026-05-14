@@ -47,6 +47,7 @@ function newJob(): Job {
     approverName: null,
     clientId: null,
     propertyId: null,
+    amount: null,
   }
 }
 
@@ -70,7 +71,7 @@ export default function JobsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [draft, setDraft] = useState<Job>(newJob())
 
-  const leads = employees.filter(e => e.status === 'Active' && (e.role === 'Admin' || e.role === 'Sub-Admin' || e.role === 'Project Manager' || e.role === 'Lead' || e.role === 'Sales'))
+  const leads = employees.filter(e => e.status === 'Active' && (e.role === 'Admin' || e.role === 'General Manager' || e.role === 'Project Manager' || e.role === 'Lead' || e.role === 'Sales'))
   const crew = employees.filter(e => e.status === 'Active')
 
   const myEmployee = employees.find(e => e.email === user?.email)
@@ -307,14 +308,28 @@ export default function JobsPage() {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-zinc-300">Scheduled Date</Label>
-              <Input
-                type="date"
-                value={draft.scheduledDate}
-                onChange={e => setDraft(d => ({ ...d, scheduledDate: e.target.value }))}
-                className="bg-zinc-800 border-zinc-700 text-white"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Scheduled Date</Label>
+                <Input
+                  type="date"
+                  value={draft.scheduledDate}
+                  onChange={e => setDraft(d => ({ ...d, scheduledDate: e.target.value }))}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Contract Amount ($)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={draft.amount ?? ''}
+                  onChange={e => setDraft(d => ({ ...d, amount: e.target.value ? parseFloat(e.target.value) : null }))}
+                  placeholder="0.00"
+                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+                />
+              </div>
             </div>
 
             <div>

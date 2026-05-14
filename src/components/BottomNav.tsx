@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth, type Action } from '@/context/AuthContext'
-import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, Folder, FileText, MessageSquare, MoreHorizontal, X } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, Folder, FileText, MessageSquare, TrendingUp, CalendarDays, MoreHorizontal, X } from 'lucide-react'
 
 type NavItem = {
   label: string
@@ -16,6 +16,8 @@ const navItems: NavItem[] = [
   { label: 'Jobs',      path: '/jobs',       action: 'view:jobs:assigned', icon: <Briefcase         size={28} strokeWidth={1.5} />, iconFilled: <Briefcase         size={28} strokeWidth={2.5} /> },
   { label: 'Clock',     path: '/timeclock',  action: 'view:timeclock',     icon: <Clock             size={28} strokeWidth={1.5} />, iconFilled: <Clock             size={28} strokeWidth={2.5} /> },
   { label: 'Estimates', path: '/estimates',  action: 'view:estimates',     icon: <FileText          size={28} strokeWidth={1.5} />, iconFilled: <FileText          size={28} strokeWidth={2.5} /> },
+  { label: 'Calendar',  path: '/calendar',   action: 'view:calendar',      icon: <CalendarDays      size={28} strokeWidth={1.5} />, iconFilled: <CalendarDays      size={28} strokeWidth={2.5} /> },
+  { label: 'Revenue',   path: '/revenue',    action: 'view:revenue',       icon: <TrendingUp        size={28} strokeWidth={1.5} />, iconFilled: <TrendingUp        size={28} strokeWidth={2.5} /> },
   { label: 'Clients',   path: '/clients',   action: 'view:clients',       icon: <Folder            size={28} strokeWidth={1.5} />, iconFilled: <Folder            size={28} strokeWidth={2.5} /> },
   { label: 'Messages',  path: '/messages',   action: 'view:messages',      icon: <MessageSquare     size={28} strokeWidth={1.5} />, iconFilled: <MessageSquare     size={28} strokeWidth={2.5} /> },
   { label: 'Employees', path: '/employees',  action: 'view:employees',     icon: <Users             size={28} strokeWidth={1.5} />, iconFilled: <Users             size={28} strokeWidth={2.5} /> },

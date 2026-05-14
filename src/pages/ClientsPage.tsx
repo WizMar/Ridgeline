@@ -20,12 +20,14 @@ export default function ClientsPage() {
   const [draft, setDraft] = useState({ name: '', phone: '', email: '', notes: '' })
   const [saving, setSaving] = useState(false)
 
-  const filtered = clients.filter(c =>
-    !search ||
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = clients
+    .filter(c =>
+      !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search) ||
+      c.email.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   function openNew() {
     setDraft({ name: '', phone: '', email: '', notes: '' })
@@ -84,41 +86,56 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map(client => {
-            const propCount = properties.filter(p => p.clientId === client.id).length
-            return (
-              <button
-                key={client.id}
-                onClick={() => navigate(`/clients/${client.id}`)}
-                className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-left hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors group"
-              >
-                <div className="flex items-start justify-between gap-1">
-                  <p className="font-semibold text-white text-sm leading-tight line-clamp-1">{client.name}</p>
-                  <ChevronRight size={14} className="text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0 mt-0.5" />
+        <div className="space-y-6">
+          {Object.entries(
+            filtered.reduce<Record<string, typeof filtered>>((groups, client) => {
+              const letter = client.name[0]?.toUpperCase().match(/[A-Z]/) ? client.name[0].toUpperCase() : '#'
+              ;(groups[letter] ??= []).push(client)
+              return groups
+            }, {})
+          )
+            .sort(([a], [b]) => (a === '#' ? 1 : b === '#' ? -1 : a.localeCompare(b)))
+            .map(([letter, group]) => (
+              <div key={letter}>
+                <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-2 pl-0.5">{letter}</p>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                  {group.map(client => {
+                    const propCount = properties.filter(p => p.clientId === client.id).length
+                    return (
+                      <button
+                        key={client.id}
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-left hover:border-zinc-600 hover:bg-zinc-800/60 transition-colors group"
+                      >
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="font-semibold text-white text-sm leading-tight line-clamp-1">{client.name}</p>
+                          <ChevronRight size={14} className="text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0 mt-0.5" />
+                        </div>
+                        <div className="mt-1.5 space-y-1">
+                          {client.phone && (
+                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                              <Phone size={10} />
+                              <span className="truncate">{client.phone}</span>
+                            </div>
+                          )}
+                          {client.email && (
+                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                              <Mail size={10} />
+                              <span className="truncate">{client.email}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-zinc-800">
+                          <span className="text-zinc-500 text-xs">
+                            {propCount} {propCount === 1 ? 'property' : 'properties'}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-                <div className="mt-1.5 space-y-1">
-                  {client.phone && (
-                    <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                      <Phone size={10} />
-                      <span className="truncate">{client.phone}</span>
-                    </div>
-                  )}
-                  {client.email && (
-                    <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                      <Mail size={10} />
-                      <span className="truncate">{client.email}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-2 pt-2 border-t border-zinc-800">
-                  <span className="text-zinc-500 text-xs">
-                    {propCount} {propCount === 1 ? 'property' : 'properties'}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
+              </div>
+            ))}
         </div>
       )}
 

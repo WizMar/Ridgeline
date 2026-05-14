@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth, type Action } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
-import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText, MessageSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, Clock, SlidersHorizontal, User, LogOut, Folder, FileText, MessageSquare, TrendingUp, CalendarDays, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 type NavItem = {
   label: string
@@ -16,6 +16,8 @@ const navItems: NavItem[] = [
   { label: 'Clients',    path: '/clients',   action: 'view:clients',        icon: <Folder            size={17} strokeWidth={1.5} /> },
   { label: 'Jobs',       path: '/jobs',       action: 'view:jobs:assigned',  icon: <Briefcase         size={17} strokeWidth={1.5} /> },
   { label: 'Estimates',  path: '/estimates',  action: 'view:estimates',      icon: <FileText          size={17} strokeWidth={1.5} /> },
+  { label: 'Calendar',   path: '/calendar',   action: 'view:calendar',       icon: <CalendarDays      size={17} strokeWidth={1.5} /> },
+  { label: 'Revenue',    path: '/revenue',    action: 'view:revenue',        icon: <TrendingUp        size={17} strokeWidth={1.5} /> },
   { label: 'Messages',   path: '/messages',   action: 'view:messages',       icon: <MessageSquare     size={17} strokeWidth={1.5} /> },
   { label: 'Employees',  path: '/employees',  action: 'view:employees',      icon: <Users             size={17} strokeWidth={1.5} /> },
   { label: 'Time Clock', path: '/timeclock',  action: 'view:timeclock',      icon: <Clock             size={17} strokeWidth={1.5} /> },

@@ -3,7 +3,7 @@ export type Employee = {
   name: string
   phone: string
   email: string
-  role: 'Employee' | 'Subcontractor' | 'Lead' | 'Project Manager' | 'Sales' | 'Sub-Admin' | 'Admin'
+  role: 'Employee' | 'Subcontractor' | 'Lead' | 'Project Manager' | 'Sales' | 'General Manager' | 'Admin'
   hireDate: string
   birthdate: string
   status: 'Active' | 'Inactive' | 'Archived'
@@ -12,6 +12,7 @@ export type Employee = {
   emergencyPhone: string
   notes: string
   profilePicture: string
+  hourlyRate: number
 }
 
 export const emptyEmployee: Omit<Employee, 'id'> = {
@@ -27,11 +28,12 @@ export const emptyEmployee: Omit<Employee, 'id'> = {
   emergencyPhone: '',
   notes: '',
   profilePicture: '',
+  hourlyRate: 0,
 }
 
 export const roleColors: Record<string, string> = {
   Admin: 'bg-stone-800 text-stone-200',
-  'Sub-Admin': 'bg-teal-900 text-teal-300',
+  'General Manager': 'bg-teal-900 text-teal-300',
   'Project Manager': 'bg-purple-900 text-purple-300',
   Sales: 'bg-blue-900 text-blue-300',
   Lead: 'bg-orange-900 text-orange-300',

@@ -10,6 +10,7 @@ type EstimatesContextType = {
   updateEstimate: (e: Estimate) => Promise<void>
   deleteEstimate: (id: string) => Promise<void>
   nextNumber: () => Promise<string>
+  sendToClient: (estimateId: string) => Promise<string | null>
 }
 
 const EstimatesContext = createContext<EstimatesContextType | null>(null)
@@ -34,6 +35,7 @@ function toEstimate(row: Record<string, unknown>): Estimate {
     declineReason: (row.decline_reason as string) ?? '',
     convertedJobId: (row.converted_job_id as string) ?? null,
     jobId: (row.job_id as string) ?? null,
+    reviewToken: (row.review_token as string) ?? null,
     createdAt: (row.created_at as string) ?? '',
     updatedAt: (row.updated_at as string) ?? '',
   }
@@ -115,8 +117,23 @@ export function EstimatesProvider({ children }: { children: React.ReactNode }) {
     if (!error) setEstimates(prev => prev.filter(x => x.id !== id))
   }
 
+  async function sendToClient(estimateId: string): Promise<string | null> {
+    const token = crypto.randomUUID()
+    const { error } = await supabase.from('estimates').update({
+      status: 'Sent',
+      review_token: token,
+      updated_at: new Date().toISOString(),
+    }).eq('id', estimateId)
+    if (error) return null
+    setEstimates(prev => prev.map(x => x.id === estimateId
+      ? { ...x, status: 'Sent' as const, reviewToken: token }
+      : x
+    ))
+    return token
+  }
+
   return (
-    <EstimatesContext.Provider value={{ estimates, loading, addEstimate, updateEstimate, deleteEstimate, nextNumber }}>
+    <EstimatesContext.Provider value={{ estimates, loading, addEstimate, updateEstimate, deleteEstimate, nextNumber, sendToClient }}>
       {children}
     </EstimatesContext.Provider>
   )

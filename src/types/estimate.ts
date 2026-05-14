@@ -1,7 +1,7 @@
 import type { JobType } from './job'
 export type { JobType }
 
-export type EstimateStatus = 'Draft' | 'Submitted' | 'Approved' | 'Sent' | 'Declined'
+export type EstimateStatus = 'Draft' | 'Submitted' | 'Approved' | 'Sent' | 'Accepted' | 'Declined'
 
 export type PitchOption =
   | '4/12' | '5/12' | '6/12'
@@ -37,6 +37,13 @@ export type LineItem = {
   unitPrice: number
 }
 
+export type LaborRow = {
+  id: string
+  label: string
+  hours: string
+  rate: string
+}
+
 export type RoofCalc = {
   squares: string
   pitch: PitchOption
@@ -56,6 +63,7 @@ export type RoofCalc = {
   numDays: string
   dayRate: string
   hourlyRate: string
+  laborRows?: LaborRow[]
   // Additional line items
   permitFee: string
   dumpster: string
@@ -77,6 +85,7 @@ export type TradeCalc = {
   // Shared labor
   laborHours: string
   hourlyRate: string
+  laborRows?: LaborRow[]
 
   // Shared materials
   materialCost: string
@@ -147,15 +156,17 @@ export type Estimate = {
   updatedAt: string
   convertedJobId: string | null
   jobId: string | null
+  reviewToken: string | null
 }
 
-export const ESTIMATE_STATUSES: EstimateStatus[] = ['Draft', 'Submitted', 'Approved', 'Sent', 'Declined']
+export const ESTIMATE_STATUSES: EstimateStatus[] = ['Draft', 'Submitted', 'Approved', 'Sent', 'Accepted', 'Declined']
 
 export const STATUS_BADGE: Record<EstimateStatus, string> = {
   Draft: 'bg-zinc-700 text-zinc-300',
   Submitted: 'bg-yellow-900/60 text-yellow-300',
   Approved: 'bg-stone-800/60 text-stone-200',
   Sent: 'bg-blue-900/60 text-blue-300',
+  Accepted: 'bg-emerald-900/60 text-emerald-300',
   Declined: 'bg-red-900/60 text-red-300',
 }
 
@@ -210,7 +221,11 @@ export function calcEstimateTotal(e: Estimate): EstimateTotals {
     } else if (laborMethod === 'dayRate') {
       laborBase = (parseFloat(e.roofCalc.numDays) || 0) * (parseFloat(e.roofCalc.dayRate) || 0)
     } else {
-      laborBase = (parseFloat(e.roofCalc.numWorkers) || 0) * (parseFloat(e.roofCalc.laborHours ?? '') || 0) * (parseFloat(e.roofCalc.hourlyRate) || 0)
+      if (e.roofCalc.laborRows && e.roofCalc.laborRows.length > 0) {
+        laborBase = e.roofCalc.laborRows.reduce((s, r) => s + (parseFloat(r.hours) || 0) * (parseFloat(r.rate) || 0), 0)
+      } else {
+        laborBase = (parseFloat(e.roofCalc.numWorkers) || 0) * (parseFloat(e.roofCalc.laborHours ?? '') || 0) * (parseFloat(e.roofCalc.hourlyRate) || 0)
+      }
     }
     const { labor, burden } = withBurden(laborBase, burdenPct)
 
@@ -353,7 +368,11 @@ export function calcEstimateTotal(e: Estimate): EstimateTotals {
     const burdenPct = parseFloat(e.tradeCalc.burdenPct) || 0
     let laborBase = 0
     if (method === 'hourly') {
-      laborBase = (parseFloat(e.tradeCalc.laborHours) || 0) * (parseFloat(e.tradeCalc.hourlyRate) || 0)
+      if (e.tradeCalc.laborRows && e.tradeCalc.laborRows.length > 0) {
+        laborBase = e.tradeCalc.laborRows.reduce((s, r) => s + (parseFloat(r.hours) || 0) * (parseFloat(r.rate) || 0), 0)
+      } else {
+        laborBase = (parseFloat(e.tradeCalc.laborHours) || 0) * (parseFloat(e.tradeCalc.hourlyRate) || 0)
+      }
     } else if (method === 'dayRate') {
       laborBase = (parseFloat(e.tradeCalc.numWorkers) || 0) * (parseFloat(e.tradeCalc.numDays) || 0) * (parseFloat(e.tradeCalc.dayRate) || 0)
     } else {

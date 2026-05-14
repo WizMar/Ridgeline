@@ -11,6 +11,9 @@ import { EstimatesProvider } from './context/EstimatesContext'
 import { PreferencesProvider } from './context/PreferencesContext'
 import { PriceBookProvider } from './context/PriceBookContext'
 import { ContractsProvider } from './context/ContractsContext'
+import { FinancialsProvider } from './context/FinancialsContext'
+import { JobRecordsProvider } from './context/JobRecordsContext'
+import { MaterialTemplatesProvider } from './context/MaterialTemplatesContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import AcceptInvitePage from './pages/AcceptInvitePage'
@@ -30,6 +33,9 @@ import ApprovePage from './pages/ApprovePage'
 import MessagesPage from './pages/MessagesPage'
 import SignContractPage from './pages/SignContractPage'
 import OnboardingPage from './pages/OnboardingPage'
+import RevenuePage from './pages/RevenuePage'
+import ReviewEstimatePage from './pages/ReviewEstimatePage'
+import CalendarPage from './pages/CalendarPage'
 
 function AppRoutes() {
   const { session, loading, user, can } = useAuth()
@@ -60,6 +66,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/approve/:token" element={<ApprovePage />} />
       <Route path="/sign/:token" element={<SignContractPage />} />
+      <Route path="/review/:token" element={<ReviewEstimatePage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
@@ -72,6 +79,9 @@ function AppRoutes() {
     <ClientsProvider>
     <EstimatesProvider>
     <JobsProvider>
+    <FinancialsProvider>
+    <JobRecordsProvider>
+    <MaterialTemplatesProvider>
     <TimeClockProvider>
     <EmployeeProvider>
       <Routes>
@@ -90,14 +100,20 @@ function AppRoutes() {
           <Route path="/employees" element={can('view:employees') ? <EmployeesPage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/employees/:id" element={can('view:employees') ? <EmployeeProfilePage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/settings" element={can('manage:settings') ? <SettingsPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/calendar" element={can('view:calendar') ? <CalendarPage /> : <Navigate to="/dashboard" replace />} />
+          <Route path="/revenue" element={can('view:revenue') ? <RevenuePage /> : <Navigate to="/dashboard" replace />} />
           <Route path="/account" element={<AccountPage />} />
         </Route>
         <Route path="/approve/:token" element={<ApprovePage />} />
         <Route path="/sign/:token" element={<SignContractPage />} />
+        <Route path="/review/:token" element={<ReviewEstimatePage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </EmployeeProvider>
     </TimeClockProvider>
+    </MaterialTemplatesProvider>
+    </JobRecordsProvider>
+    </FinancialsProvider>
     </JobsProvider>
     </EstimatesProvider>
     </ClientsProvider>

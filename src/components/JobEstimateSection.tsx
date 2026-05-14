@@ -8,15 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PDFDownloadButton } from '@/components/PDFDownloadButton'
-import { BookOpen, Plus, Trash2, FileText, Save, Sparkles } from 'lucide-react'
+import { BookOpen, Plus, Trash2, FileText, Save, Sparkles, X, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import {
-  type Estimate, type EstimateStatus, type LineItem, type PitchOption,
+  type Estimate, type EstimateStatus, type LineItem, type LaborRow, type PitchOption,
   PITCH_OPTIONS, ESTIMATE_STATUSES, STATUS_BADGE, calcEstimateTotal,
 } from '@/types/estimate'
 import type { Job } from '@/types/job'
 import type { PDFCompanyInfo } from '@/components/EstimatePDF'
+import { useEmployees } from '@/context/EmployeeContext'
+import type { Employee } from '@/types/employee'
 
 function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -64,11 +66,124 @@ function FieldInput({ value, onChange, prefix, placeholder }: { value: string; o
   )
 }
 
+function LaborCrewTable({ rows, defaultRate, onChange, employees = [] }: {
+  rows: LaborRow[]
+  defaultRate: string
+  onChange: (rows: LaborRow[]) => void
+  employees?: Employee[]
+}) {
+  const [crewOpen, setCrewOpen] = useState(false)
+
+  function addFromEmployee(emp: Employee) {
+    onChange([...rows, { id: crypto.randomUUID(), label: emp.role, hours: '8', rate: emp.hourlyRate > 0 ? emp.hourlyRate.toString() : defaultRate }])
+    setCrewOpen(false)
+  }
+  function addManual() {
+    onChange([...rows, { id: crypto.randomUUID(), label: '', hours: '8', rate: defaultRate }])
+  }
+  function update(id: string, patch: Partial<LaborRow>) {
+    onChange(rows.map(r => r.id === id ? { ...r, ...patch } : r))
+  }
+  function remove(id: string) {
+    onChange(rows.filter(r => r.id !== id))
+  }
+  const total = rows.reduce((s, r) => s + (parseFloat(r.hours) || 0) * (parseFloat(r.rate) || 0), 0)
+  const activeEmployees = employees.filter(e => e.status === 'Active')
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-zinc-400 text-xs">Labor Crew</Label>
+        <div className="flex items-center gap-3">
+          {activeEmployees.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setCrewOpen(o => !o)}
+                className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-300 transition-colors"
+              >
+                <Users size={11} /> From Crew
+              </button>
+              {crewOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setCrewOpen(false)} />
+                  <div className="absolute right-0 top-5 z-20 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl min-w-48 overflow-hidden">
+                    {activeEmployees.map(emp => (
+                      <button
+                        key={emp.id}
+                        onClick={() => addFromEmployee(emp)}
+                        className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-700 text-left transition-colors"
+                      >
+                        <div>
+                          <p className="text-zinc-200 text-xs font-medium">{emp.name}</p>
+                          <p className="text-zinc-500 text-[10px]">{emp.role}</p>
+                        </div>
+                        {emp.hourlyRate > 0 && (
+                          <span className="text-zinc-400 text-xs tabular-nums ml-3">${emp.hourlyRate}/hr</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          <button onClick={addManual} className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Plus size={11} /> Manual
+          </button>
+        </div>
+      </div>
+      {rows.length === 0 && (
+        <p className="text-zinc-600 text-xs py-1">Add crew members with individual rates.</p>
+      )}
+      {rows.map(row => (
+        <div key={row.id} className="flex items-center gap-2 bg-zinc-900 rounded-lg px-3 py-2">
+          <input
+            value={row.label}
+            onChange={e => update(row.id, { label: e.target.value })}
+            placeholder="Role"
+            className="w-20 bg-transparent text-zinc-300 text-xs outline-none placeholder:text-zinc-600 border-b border-zinc-700 focus:border-stone-500 pb-0.5"
+          />
+          <input
+            type="number"
+            value={row.hours}
+            onChange={e => update(row.id, { hours: e.target.value })}
+            placeholder="hrs"
+            className="w-14 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs text-right"
+          />
+          <span className="text-zinc-600 text-xs shrink-0">hrs ×</span>
+          <div className="flex items-center gap-0.5">
+            <span className="text-zinc-500 text-xs">$</span>
+            <input
+              type="number"
+              value={row.rate}
+              onChange={e => update(row.id, { rate: e.target.value })}
+              placeholder="rate"
+              className="w-16 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white text-xs text-right"
+            />
+          </div>
+          <span className="text-zinc-400 text-xs ml-auto tabular-nums shrink-0">
+            ${((parseFloat(row.hours) || 0) * (parseFloat(row.rate) || 0)).toFixed(0)}
+          </span>
+          <button onClick={() => remove(row.id)} className="text-zinc-600 hover:text-red-400 transition-colors shrink-0">
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+      {rows.length > 1 && (
+        <div className="flex justify-end pr-8">
+          <span className="text-zinc-400 text-xs tabular-nums">Total labor: ${total.toFixed(0)}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function JobEstimateSection({ job }: { job: Job }) {
   const { user } = useAuth()
   const { settings } = useSettings()
   const { items: pbItems } = usePriceBook()
-  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const { employees } = useEmployees()
+  const isAdmin = user?.role === 'Admin' || user?.role === 'General Manager'
   const pricing = settings.pricing ?? {}
   const defaults = {
     wastePct: pricing.wastePct ?? '10',
@@ -378,10 +493,12 @@ export default function JobEstimateSection({ job }: { job: Job }) {
           </Row>
 
           {(estimate.tradeCalc.repairLaborMethod ?? 'hourly') === 'hourly' && (
-            <>
-              <Row label="Labor Hours"><FieldInput value={estimate.tradeCalc.laborHours} onChange={v => updateTrade({ laborHours: v })} /></Row>
-              <Row label="Hourly Rate"><FieldInput prefix="$" value={estimate.tradeCalc.hourlyRate} onChange={v => updateTrade({ hourlyRate: v })} /></Row>
-            </>
+            <LaborCrewTable
+              rows={estimate.tradeCalc.laborRows ?? []}
+              defaultRate={defaults.hourlyRate}
+              onChange={rows => updateTrade({ laborRows: rows })}
+              employees={employees}
+            />
           )}
           {(estimate.tradeCalc.repairLaborMethod ?? 'hourly') === 'dayRate' && (
             <>
@@ -490,11 +607,12 @@ export default function JobEstimateSection({ job }: { job: Job }) {
               </>
             )}
             {estimate.roofCalc.laborMethod === 'hourly' && (
-              <>
-                <Row label="# Workers"><FieldInput value={estimate.roofCalc.numWorkers} onChange={v => updateRoof({ numWorkers: v })} /></Row>
-                <Row label="Hours"><FieldInput value={estimate.roofCalc.laborHours} onChange={v => updateRoof({ laborHours: v })} /></Row>
-                <Row label="Hourly Rate"><FieldInput prefix="$" value={estimate.roofCalc.hourlyRate} onChange={v => updateRoof({ hourlyRate: v })} /></Row>
-              </>
+              <LaborCrewTable
+                rows={estimate.roofCalc.laborRows ?? []}
+                defaultRate={defaults.hourlyRate}
+                onChange={rows => updateRoof({ laborRows: rows })}
+                employees={employees}
+              />
             )}
             <Row label="Labor Burden %"><FieldInput prefix="%" value={estimate.roofCalc.burdenPct} onChange={v => updateRoof({ burdenPct: v })} /></Row>
             <div className="border-t border-zinc-700 pt-3 space-y-3">

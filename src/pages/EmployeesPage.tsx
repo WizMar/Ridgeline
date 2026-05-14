@@ -14,7 +14,7 @@ import { useSettings } from '@/context/SettingsContext'
 import { toast } from 'sonner'
 import { Users } from 'lucide-react'
 
-const ADMIN_INVITE_ROLES: UserRole[] = ['Sub-Admin', 'Project Manager', 'Sales', 'Lead', 'Employee', 'Subcontractor']
+const ADMIN_INVITE_ROLES: UserRole[] = ['General Manager', 'Project Manager', 'Sales', 'Lead', 'Employee', 'Subcontractor']
 const SUB_ADMIN_INVITE_ROLES: UserRole[] = ['Project Manager', 'Sales', 'Lead', 'Employee', 'Subcontractor']
 
 export default function EmployeesPage() {
@@ -52,6 +52,7 @@ export default function EmployeesPage() {
     }
   }, [user?.org_id])
 
+  const isAdmin = user?.role === 'Admin' || user?.role === 'General Manager'
   const canInvite = can('invite:members') && (user?.role === 'Admin' || subAdminCanInvite)
   const inviteRoles = user?.role === 'Admin' ? ADMIN_INVITE_ROLES : SUB_ADMIN_INVITE_ROLES
 
@@ -113,7 +114,7 @@ export default function EmployeesPage() {
 
   function openEdit(emp: Employee) {
     setEditTarget(emp)
-    setForm({ name: emp.name, phone: emp.phone, email: emp.email, role: emp.role, hireDate: emp.hireDate, birthdate: emp.birthdate, status: emp.status, address: emp.address, emergencyContact: emp.emergencyContact, emergencyPhone: emp.emergencyPhone, notes: emp.notes, profilePicture: emp.profilePicture })
+    setForm({ name: emp.name, phone: emp.phone, email: emp.email, role: emp.role, hireDate: emp.hireDate, birthdate: emp.birthdate, status: emp.status, address: emp.address, emergencyContact: emp.emergencyContact, emergencyPhone: emp.emergencyPhone, notes: emp.notes, profilePicture: emp.profilePicture, hourlyRate: emp.hourlyRate })
     setOpen(true)
   }
 
@@ -356,7 +357,7 @@ export default function EmployeesPage() {
                     <SelectItem value="Lead">Lead</SelectItem>
                     <SelectItem value="Project Manager">Project Manager</SelectItem>
                     <SelectItem value="Sales">Sales</SelectItem>
-                    <SelectItem value="Sub-Admin">Sub-Admin</SelectItem>
+                    <SelectItem value="General Manager">General Manager</SelectItem>
                     <SelectItem value="Admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -367,6 +368,27 @@ export default function EmployeesPage() {
                   className="bg-zinc-800 border-zinc-700 text-white" />
               </div>
             </div>
+            {isAdmin && (
+              <div className="space-y-1.5 pt-1 border-t border-zinc-800">
+                <Label className="text-zinc-300 flex items-center gap-2">
+                  Hourly Rate
+                  <span className="text-zinc-600 text-[10px] font-semibold uppercase tracking-wider">private</span>
+                </Label>
+                <div className="relative max-w-36">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={form.hourlyRate || ''}
+                    onChange={e => setForm({ ...form, hourlyRate: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                    className="bg-zinc-800 border-zinc-700 text-white pl-7 placeholder:text-zinc-500"
+                  />
+                </div>
+                <p className="text-zinc-600 text-xs">Only visible to admins and managers. Never shown to the employee or on client documents.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)} className="text-zinc-400 hover:text-white">Cancel</Button>

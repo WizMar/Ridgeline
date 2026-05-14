@@ -9,7 +9,7 @@ import { usePreferences, DATE_FORMATS } from '@/context/PreferencesContext'
 
 const ROLE_COLORS: Record<string, string> = {
   Admin:             'bg-stone-500/20 text-stone-300',
-  'Sub-Admin':       'bg-teal-600/20 text-teal-400',
+  'General Manager':       'bg-teal-600/20 text-teal-400',
   'Project Manager': 'bg-purple-600/20 text-purple-400',
   Lead:              'bg-orange-600/20 text-orange-400',
   Sales:             'bg-blue-600/20 text-blue-400',

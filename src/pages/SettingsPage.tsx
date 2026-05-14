@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check, LayoutDashboard, BookOpen, Pencil, Trash2, Plus, Upload, Download, FileSignature } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Building2, DollarSign, Calendar, Shield, Bell, CreditCard, AlertTriangle, Check, LayoutDashboard, BookOpen, Pencil, Trash2, Plus, Upload, Download, FileSignature, Layers } from 'lucide-react'
 import ContractTemplateSection from '@/components/ContractTemplateSection'
+import MaterialListsSettings from '@/components/MaterialListsSettings'
 import { read, utils, writeFile } from 'xlsx'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -46,7 +47,7 @@ const PERMISSION_ROWS: { label: string; action: Action; lockForAdmin?: boolean }
   { label: 'Settings',          action: 'manage:settings' },
 ]
 
-const ROLE_NAMES: UserRole[] = ['Admin', 'Sub-Admin', 'Project Manager', 'Lead', 'Sales', 'Employee', 'Subcontractor']
+const ROLE_NAMES: UserRole[] = ['Admin', 'General Manager', 'Project Manager', 'Lead', 'Sales', 'Employee', 'Subcontractor']
 
 const DASHBOARD_WIDGETS: { key: keyof DashboardVisibility; label: string; description: string }[] = [
   { key: 'summaryCards', label: 'Summary Cards',    description: 'Active jobs, clocked in, estimates, revenue' },
@@ -56,12 +57,13 @@ const DASHBOARD_WIDGETS: { key: keyof DashboardVisibility; label: string; descri
   { key: 'recentJobs',   label: 'Recent Jobs',      description: 'Table of the 5 most recently created jobs' },
 ]
 
-type Section = 'company' | 'pricing' | 'pricebook' | 'contracts' | 'payperiod' | 'roles' | 'dashboard' | 'notifications' | 'subscription' | 'danger'
+type Section = 'company' | 'pricing' | 'pricebook' | 'contracts' | 'payperiod' | 'roles' | 'dashboard' | 'notifications' | 'subscription' | 'danger' | 'materials'
 
 const SECTIONS: { id: Section; label: string; description: string; icon: React.ElementType }[] = [
   { id: 'company',       label: 'Company',            description: 'Business info, branding & trade',       icon: Building2       },
   { id: 'pricing',       label: 'Pricing Defaults',   description: 'Markup, waste & labor rates',           icon: DollarSign      },
   { id: 'pricebook',     label: 'Price Book',         description: 'Saved items for estimates',             icon: BookOpen        },
+  { id: 'materials',     label: 'Material Lists',     description: 'Pre-built lists by brand & job type',   icon: Layers          },
   { id: 'contracts',     label: 'Contract Templates', description: 'Reusable templates for client contracts', icon: FileSignature  },
   { id: 'payperiod',     label: 'Pay Period',          description: 'Pay cycle & schedule',                  icon: Calendar        },
   { id: 'roles',         label: 'Roles & Access',     description: 'Edit permissions per role',             icon: Shield          },
@@ -576,8 +578,8 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <ToggleRow
-                label="Allow Sub-Admins to invite members"
-                description="When enabled, Sub-Admins can invite Project Manager, Lead, Sales, Employee, and Subcontractor roles."
+                label="Allow General Managers to invite members"
+                description="When enabled, General Managers can invite Project Manager, Lead, Sales, Employee, and Subcontractor roles."
                 checked={subAdminCanInvite}
                 onCheckedChange={setSubAdminCanInvite}
               />
@@ -717,6 +719,15 @@ export default function SettingsPage() {
   }
 
   // ── Danger Zone ──────────────────────────────────────────────────────────
+  if (activeSection === 'materials') {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <SectionHeader />
+        <MaterialListsSettings />
+      </div>
+    )
+  }
+
   if (activeSection === 'danger') {
     return (
       <div className="max-w-2xl mx-auto">
@@ -728,7 +739,7 @@ export default function SettingsPage() {
               <CardDescription className="text-zinc-400">Transfer admin ownership to another member of your organization.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-zinc-400 text-sm mb-4">The current owner will be downgraded to Sub-Admin. This action cannot be undone without the new owner's cooperation.</p>
+              <p className="text-zinc-400 text-sm mb-4">The current owner will be downgraded to General Manager. This action cannot be undone without the new owner's cooperation.</p>
               <Button variant="outline" disabled className="border-zinc-700 text-zinc-400 cursor-not-allowed">
                 Coming Soon
               </Button>

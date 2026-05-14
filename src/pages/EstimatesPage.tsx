@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, BookOpen, FileText, Sparkles, CheckCircle, XCircle, SendHorizontal } from 'lucide-react'
+import { X, BookOpen, FileText, Sparkles, CheckCircle, XCircle, SendHorizontal, Link, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useEstimates } from '@/context/EstimatesContext'
@@ -123,6 +123,7 @@ function newEstimate(num: string, defaults: PricingDefaults): Estimate {
     updatedAt: new Date().toISOString(),
     convertedJobId: null,
     jobId: null,
+    reviewToken: null,
   }
 }
 
@@ -132,6 +133,7 @@ const STATUS_BORDER: Record<EstimateStatus, string> = {
   Submitted: 'border-l-yellow-500',
   Sent: 'border-l-blue-500',
   Approved: 'border-l-stone-400',
+  Accepted: 'border-l-emerald-500',
   Declined: 'border-l-red-500',
 }
 
@@ -234,13 +236,13 @@ function BtnGroup<T extends string>({
 }
 
 export default function EstimatesPage() {
-  const { estimates, addEstimate, updateEstimate, deleteEstimate, nextNumber } = useEstimates()
+  const { estimates, addEstimate, updateEstimate, deleteEstimate, nextNumber, sendToClient } = useEstimates()
   const { addJob } = useJobs()
   const { settings } = useSettings()
   const { employees } = useEmployees()
   const { user } = useAuth()
 
-  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const isAdmin = user?.role === 'Admin' || user?.role === 'General Manager'
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<EstimateStatus | 'All'>('All')
@@ -258,6 +260,7 @@ export default function EstimatesPage() {
   const [liForm, setLiForm] = useState<{ desc: string; qty: string; unit: string; price: string } | null>(null)
   const [aiDesc, setAiDesc] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [sendingToClient, setSendingToClient] = useState(false)
 
   const { items: priceBookItems } = usePriceBook()
 
@@ -426,10 +429,21 @@ export default function EstimatesPage() {
     toast.success('Estimate declined')
   }
 
+  async function handleSendToClient(estimate: Estimate) {
+    setSendingToClient(true)
+    const token = await sendToClient(estimate.id)
+    setSendingToClient(false)
+    if (!token) { toast.error('Failed to generate client link'); return }
+    const link = `${window.location.origin}/review/${token}`
+    await navigator.clipboard.writeText(link).catch(() => {})
+    toast.success('Link copied to clipboard — share it with your client')
+    setSelected(prev => prev ? { ...prev, status: 'Sent', reviewToken: token } : prev)
+  }
+
   async function handleConvert(estimate: Estimate) {
     const leads = employees.filter(e =>
       e.status === 'Active' &&
-      (e.role === 'Admin' || e.role === 'Sub-Admin' || e.role === 'Project Manager' || e.role === 'Sales')
+      (e.role === 'Admin' || e.role === 'General Manager' || e.role === 'Project Manager' || e.role === 'Sales')
     )
     const job: Job = {
       id: crypto.randomUUID(),
@@ -449,6 +463,7 @@ export default function EstimatesPage() {
       updatedAt: new Date().toISOString(),
       clientId: null,
       propertyId: null,
+      amount: calcEstimateTotal(estimate).total,
       approvalRequired: false,
       approvalStatus: 'none',
       approvalRequestedAt: null,
@@ -651,7 +666,33 @@ export default function EstimatesPage() {
                       <p className="text-zinc-200 text-sm whitespace-pre-wrap">{selected.notes}</p>
                     </div>
                   )}
-                  {selected.convertedJobId && (
+                  {selected.status === 'Accepted' && selected.convertedJobId && (
+                    <div className="bg-emerald-900/30 border border-emerald-700 rounded-lg p-3">
+                      <p className="text-emerald-300 text-sm font-medium">✓ Client accepted — job and contract draft created.</p>
+                    </div>
+                  )}
+                  {selected.status === 'Sent' && selected.reviewToken && (
+                    <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3 space-y-2">
+                      <p className="text-blue-300 text-xs font-semibold uppercase tracking-wide">Client Review Link</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-blue-200 text-xs font-mono truncate flex-1">{`${window.location.origin}/review/${selected.reviewToken}`}</p>
+                        <button
+                          onClick={() => {
+                            const link = `${window.location.origin}/review/${selected.reviewToken}`
+                            navigator.clipboard.writeText(link).catch(() => {})
+                            toast.success('Link copied')
+                          }}
+                          className="text-blue-400 hover:text-blue-200 shrink-0"
+                        >
+                          <Link size={14} />
+                        </button>
+                        <a href={`${window.location.origin}/review/${selected.reviewToken}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-200 shrink-0">
+                          <ExternalLink size={14} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {selected.status !== 'Accepted' && selected.convertedJobId && (
                     <div className="bg-teal-900/30 border border-teal-700 rounded-lg p-3">
                       <p className="text-teal-300 text-sm font-medium">✓ Converted to a job.</p>
                     </div>
@@ -719,6 +760,34 @@ export default function EstimatesPage() {
                     >
                       <SendHorizontal size={14} className="mr-1.5" />
                       Resubmit
+                    </Button>
+                  )}
+                  {selected.status === 'Approved' && isAdmin && (
+                    <Button
+                      className="bg-blue-700 hover:bg-blue-600 text-white"
+                      disabled={sendingToClient}
+                      onClick={() => handleSendToClient(selected)}
+                    >
+                      <SendHorizontal size={14} className="mr-1.5" />
+                      {sendingToClient ? 'Generating…' : 'Send to Client'}
+                    </Button>
+                  )}
+                  {selected.status === 'Sent' && isAdmin && (
+                    <Button
+                      className="bg-blue-700 hover:bg-blue-600 text-white"
+                      disabled={sendingToClient}
+                      onClick={() => handleSendToClient(selected)}
+                    >
+                      <Link size={14} className="mr-1.5" />
+                      Resend Link
+                    </Button>
+                  )}
+                  {selected.status === 'Accepted' && selected.convertedJobId && (
+                    <Button
+                      className="bg-emerald-700 hover:bg-emerald-600 text-white"
+                      onClick={() => { setDetailOpen(false); window.location.href = `/jobs/${selected.convertedJobId}` }}
+                    >
+                      View Job →
                     </Button>
                   )}
                   {canConvert(selected) && (

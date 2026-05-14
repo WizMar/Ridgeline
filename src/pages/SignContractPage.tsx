@@ -5,10 +5,13 @@ import { CheckCircle2, FileSignature } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+type ContractSection = { id: string; title: string; body: string }
+
 type ContractData = {
   id: string
   title: string
   body: string
+  sections: ContractSection[] | null
   status: string
   signer_name: string | null
   signed_at: string | null
@@ -115,10 +118,28 @@ export default function SignContractPage() {
         </div>
 
         {/* Contract body */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <pre className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-            {contract?.body}
-          </pre>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-6">
+          {contract?.sections && contract.sections.length > 0 ? (
+            contract.sections.map((section, i) => (
+              <div key={section.id ?? i}>
+                {section.title && (
+                  <p className="text-white text-xs font-bold uppercase tracking-widest mb-2">
+                    {section.title}
+                  </p>
+                )}
+                <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
+                  {section.body}
+                </p>
+                {i < contract.sections!.length - 1 && (
+                  <div className="border-b border-zinc-800 mt-6" />
+                )}
+              </div>
+            ))
+          ) : (
+            <pre className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              {contract?.body}
+            </pre>
+          )}
         </div>
 
         {/* Signature section */}

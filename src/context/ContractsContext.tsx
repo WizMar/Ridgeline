@@ -6,7 +6,7 @@ import type { Contract, ContractTemplate } from '@/types/contract'
 type ContractsContextType = {
   templates: ContractTemplate[]
   templatesLoading: boolean
-  addTemplate: (t: { name: string; body: string }) => Promise<ContractTemplate | null>
+  addTemplate: (t: { name: string; body: string; sections?: ContractTemplate['sections']; tradeType?: string | null }) => Promise<ContractTemplate | null>
   updateTemplate: (t: ContractTemplate) => Promise<void>
   deleteTemplate: (id: string) => Promise<void>
 
@@ -26,6 +26,8 @@ function toTemplate(row: Record<string, unknown>): ContractTemplate {
     id: row.id as string,
     name: (row.name as string) ?? '',
     body: (row.body as string) ?? '',
+    sections: (row.sections as ContractTemplate['sections']) ?? null,
+    tradeType: (row.trade_type as string) ?? null,
     createdAt: (row.created_at as string) ?? '',
     updatedAt: (row.updated_at as string) ?? '',
   }
@@ -38,6 +40,7 @@ function toContract(row: Record<string, unknown>): Contract {
     templateId: (row.template_id as string) ?? null,
     title: (row.title as string) ?? '',
     body: (row.body as string) ?? '',
+    sections: (row.sections as Contract['sections']) ?? null,
     status: (row.status as Contract['status']) ?? 'draft',
     signToken: (row.sign_token as string) ?? '',
     signerName: (row.signer_name as string) ?? null,
@@ -66,10 +69,11 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
       .then(({ data }) => { if (data) setContracts(data.map(toContract)); setContractsLoading(false) })
   }, [user?.org_id])
 
-  async function addTemplate(t: { name: string; body: string }): Promise<ContractTemplate | null> {
+  async function addTemplate(t: { name: string; body: string; sections?: ContractTemplate['sections']; tradeType?: string | null }): Promise<ContractTemplate | null> {
     if (!user?.org_id) return null
     const { data, error } = await supabase.from('contract_templates').insert({
       org_id: user.org_id, name: t.name, body: t.body,
+      sections: t.sections ?? null, trade_type: t.tradeType ?? null,
     }).select().single()
     if (data && !error) { const tpl = toTemplate(data); setTemplates(prev => [tpl, ...prev]); return tpl }
     return null
@@ -77,7 +81,8 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
 
   async function updateTemplate(t: ContractTemplate) {
     const { error } = await supabase.from('contract_templates').update({
-      name: t.name, body: t.body, updated_at: new Date().toISOString(),
+      name: t.name, body: t.body, sections: t.sections ?? null,
+      trade_type: t.tradeType ?? null, updated_at: new Date().toISOString(),
     }).eq('id', t.id)
     if (!error) setTemplates(prev => prev.map(x => x.id === t.id ? t : x))
   }
@@ -87,11 +92,11 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
     if (!error) setTemplates(prev => prev.filter(x => x.id !== id))
   }
 
-  async function addContract(c: { jobId: string; templateId: string | null; title: string; body: string }): Promise<Contract | null> {
+  async function addContract(c: { jobId: string; templateId: string | null; title: string; body: string; sections?: Contract['sections'] }): Promise<Contract | null> {
     if (!user?.org_id) return null
     const { data, error } = await supabase.from('contracts').insert({
       org_id: user.org_id, job_id: c.jobId, template_id: c.templateId,
-      title: c.title, body: c.body, status: 'draft',
+      title: c.title, body: c.body, sections: c.sections ?? null, status: 'draft',
     }).select().single()
     if (data && !error) { const contract = toContract(data); setContracts(prev => [contract, ...prev]); return contract }
     console.error('[addContract]', error?.message)
@@ -100,8 +105,8 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
 
   async function updateContract(c: Contract) {
     const { error } = await supabase.from('contracts').update({
-      title: c.title, body: c.body, status: c.status,
-      updated_at: new Date().toISOString(),
+      title: c.title, body: c.body, sections: c.sections ?? null,
+      status: c.status, updated_at: new Date().toISOString(),
     }).eq('id', c.id)
     if (!error) setContracts(prev => prev.map(x => x.id === c.id ? c : x))
   }

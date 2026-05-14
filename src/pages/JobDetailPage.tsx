@@ -17,15 +17,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
-  ChevronLeft, ChevronDown, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText, FileSignature, Download,
+  ChevronLeft, ChevronDown, Pencil, Trash2, Upload, X, Play, Send, Copy, Check, CheckCircle2, ShieldAlert, MapPin, Users, Calendar, FileText, FileSignature, Download, Smartphone,
 } from 'lucide-react'
 import {
   type Job, type JobStatus, type JobType,
   JOB_STATUSES, JOB_TYPES, STATUS_BADGE,
 } from '@/types/job'
 import JobEstimateSection from '@/components/JobEstimateSection'
+import SignatureCanvas, { type SignatureCanvasRef } from '@/components/SignatureCanvas'
+import JobFinancialsTab from '@/components/JobFinancialsTab'
+import JobMaterialOrdersTab from '@/components/JobMaterialOrdersTab'
+import JobPermitsTab from '@/components/JobPermitsTab'
+import JobCommunicationsTab from '@/components/JobCommunicationsTab'
+import JobPLTab from '@/components/JobPLTab'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
-type Tab = 'overview' | 'photos' | 'estimate' | 'approval' | 'contract'
+type Tab = 'overview' | 'field' | 'paperwork' | 'financials'
 
 const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
   Draft: 'Scheduled',
@@ -57,7 +64,7 @@ export default function JobDetailPage() {
   const client = job?.clientId ? clients.find(c => c.id === job.clientId) : null
   const property = job?.propertyId ? properties.find(p => p.id === job.propertyId) : null
 
-  const isAdmin = user?.role === 'Admin' || user?.role === 'Sub-Admin'
+  const isAdmin = user?.role === 'Admin' || user?.role === 'General Manager'
   const isFieldWorker = user?.role === 'Employee' || user?.role === 'Subcontractor'
   const canRequestApproval = isAdmin || user?.role === 'Project Manager' || user?.role === 'Lead'
 
@@ -85,6 +92,10 @@ export default function JobDetailPage() {
   const [contractBody, setContractBody] = useState('')
   const [contractCopied, setContractCopied] = useState(false)
   const [statusPickerOpen, setStatusPickerOpen] = useState(false)
+  const [inPersonOpen, setInPersonOpen] = useState(false)
+  const [inPersonName, setInPersonName] = useState('')
+  const [inPersonSaving, setInPersonSaving] = useState(false)
+  const sigCanvasRef = useRef<SignatureCanvasRef>(null)
   const statusPickerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -185,17 +196,16 @@ export default function JobDetailPage() {
   }
 
   const leads = employees.filter(e =>
-    e.status === 'Active' && ['Admin', 'Sub-Admin', 'Project Manager', 'Lead', 'Sales'].includes(e.role)
+    e.status === 'Active' && ['Admin', 'General Manager', 'Project Manager', 'Lead', 'Sales'].includes(e.role)
   )
   const crew = employees.filter(e => e.status === 'Active')
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
-    { key: 'photos', label: `Photos${media.length > 0 ? ` (${media.length})` : ''}` },
+    { key: 'field', label: `Field${media.length > 0 ? ` (${media.length})` : ''}` },
     ...(!isFieldWorker ? [
-      { key: 'estimate' as Tab, label: 'Estimate' },
-      { key: 'approval' as Tab, label: 'Approval' },
-      { key: 'contract' as Tab, label: 'Contract' },
+      { key: 'paperwork' as Tab, label: 'Paperwork' },
+      { key: 'financials' as Tab, label: 'Financials' },
     ] : []),
   ]
 
@@ -230,6 +240,23 @@ export default function JobDetailPage() {
   async function handleVoidContract(contractId: string) {
     await voidContract(contractId)
     toast.success('Contract voided')
+  }
+
+  async function handleInPersonApproval() {
+    if (!inPersonName.trim() || sigCanvasRef.current?.isEmpty()) return
+    setInPersonSaving(true)
+    await updateJob({
+      ...j,
+      approvalStatus: 'approved',
+      approverName: inPersonName.trim(),
+      approvedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    setInPersonOpen(false)
+    setInPersonName('')
+    sigCanvasRef.current?.clear()
+    toast.success('Job signed off')
+    setInPersonSaving(false)
   }
 
   function copySignLink(token: string) {
@@ -425,10 +452,11 @@ export default function JobDetailPage() {
         ))}
       </div>
 
+      <ErrorBoundary key={activeTab}>
+
       {/* Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-4">
-          {/* Client + Property */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {client && (
               <button onClick={() => navigate(`/clients/${client.id}`)} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-left hover:border-zinc-600 transition-colors group">
@@ -448,7 +476,6 @@ export default function JobDetailPage() {
             )}
           </div>
 
-          {/* Map */}
           {job.address && (
             <div className="rounded-lg overflow-hidden border border-zinc-800">
               <iframe
@@ -460,7 +487,6 @@ export default function JobDetailPage() {
             </div>
           )}
 
-          {/* Lead + Crew */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
               <p className="text-zinc-500 text-xs mb-1">Lead</p>
@@ -477,7 +503,6 @@ export default function JobDetailPage() {
             </div>
           </div>
 
-          {/* Scope */}
           {job.scope && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
               <p className="text-zinc-500 text-xs mb-1">Scope of Work</p>
@@ -485,7 +510,6 @@ export default function JobDetailPage() {
             </div>
           )}
 
-          {/* Notes */}
           {job.notes && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
               <p className="text-zinc-500 text-xs mb-1">Internal Notes</p>
@@ -495,268 +519,394 @@ export default function JobDetailPage() {
         </div>
       )}
 
-      {/* Photos */}
-      {activeTab === 'photos' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1.5">
-              {(['before', 'during', 'damage', 'after'] as MediaCategory[]).map(cat => {
-                const count = media.filter(m => m.category === cat).length
-                return (
-                  <button key={cat} onClick={() => setActiveCategory(cat)}
-                    className={`text-xs px-3 py-1.5 rounded-full border capitalize transition-colors ${
-                      activeCategory === cat ? 'bg-stone-500 border-stone-500 text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+      {/* Field — Photos (everyone) + Materials / Permits / Comms (non-field) */}
+      {activeTab === 'field' && (
+        <div className="space-y-8">
+          {/* Photos */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1.5">
+                {(['before', 'during', 'damage', 'after'] as MediaCategory[]).map(cat => {
+                  const count = media.filter(m => m.category === cat).length
+                  return (
+                    <button key={cat} onClick={() => setActiveCategory(cat)}
+                      className={`text-xs px-3 py-1.5 rounded-full border capitalize transition-colors ${
+                        activeCategory === cat ? 'bg-stone-500 border-stone-500 text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                      }`}
+                    >
+                      {cat}{count > 0 ? ` (${count})` : ''}
+                    </button>
+                  )
+                })}
+              </div>
+              <label className={uploading ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'}>
+                <input key={uploadKey} type="file" multiple accept="image/*,video/*" className="hidden"
+                  onChange={async e => { if (e.target.files) { await uploadMedia(e.target.files, activeCategory); setUploadKey(k => k + 1) } }}
+                />
+                <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-200 transition-colors">
+                  <Upload size={12} />{uploading ? 'Uploading…' : 'Upload'}
+                </span>
+              </label>
+            </div>
+
+            {mediaLoading ? (
+              <p className="text-zinc-500 text-sm text-center py-8">Loading…</p>
+            ) : categoryMedia.length === 0 ? (
+              <div className="border border-dashed border-zinc-700 rounded-lg py-12 text-center">
+                <p className="text-zinc-600 text-sm">No {activeCategory} photos yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {categoryMedia.map(item => (
+                  <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-zinc-900">
+                    {item.type === 'video' ? (
+                      <>
+                        <video src={item.url} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer" onClick={() => window.open(item.url, '_blank')}>
+                          <Play size={22} className="text-white" fill="white" />
+                        </div>
+                      </>
+                    ) : (
+                      <img src={item.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => window.open(item.url, '_blank')} />
+                    )}
+                    {isAdmin && (
+                      <button onClick={e => { e.stopPropagation(); deleteMedia(item) }}
+                        className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <X size={11} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!isFieldWorker && (
+            <>
+              <div className="border-t border-zinc-800 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">Materials</p>
+                <JobMaterialOrdersTab jobId={j.id} canEdit={canBill} />
+              </div>
+              <div className="border-t border-zinc-800 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">Permits</p>
+                <JobPermitsTab jobId={j.id} canEdit={canBill} />
+              </div>
+              <div className="border-t border-zinc-800 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">Communications</p>
+                <JobCommunicationsTab jobId={j.id} canEdit={!isFieldWorker} />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Paperwork — Estimate + Approval + Contract */}
+      {activeTab === 'paperwork' && (
+        <div className="space-y-8">
+          {/* Estimate */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">Estimate</p>
+            <JobEstimateSection job={job} />
+          </div>
+
+          {/* Approval */}
+          <div className="border-t border-zinc-800 pt-6 max-w-lg space-y-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-zinc-300 text-sm font-semibold">Customer Sign-off</p>
+                {isAdmin && (
+                  <button onClick={toggleApprovalRequired}
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                      job.approvalRequired ? 'bg-stone-800/40 border-stone-500 text-stone-200' : 'border-zinc-600 text-zinc-500 hover:border-zinc-400'
                     }`}
                   >
-                    {cat}{count > 0 ? ` (${count})` : ''}
+                    <ShieldAlert size={11} />
+                    {job.approvalRequired ? 'Required' : 'Require sign-off'}
                   </button>
-                )
-              })}
-            </div>
-            <label className={uploading ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer'}>
-              <input key={uploadKey} type="file" multiple accept="image/*,video/*" className="hidden"
-                onChange={async e => { if (e.target.files) { await uploadMedia(e.target.files, activeCategory); setUploadKey(k => k + 1) } }}
-              />
-              <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-200 transition-colors">
-                <Upload size={12} />{uploading ? 'Uploading…' : 'Upload'}
-              </span>
-            </label>
-          </div>
+                )}
+              </div>
 
-          {mediaLoading ? (
-            <p className="text-zinc-500 text-sm text-center py-8">Loading…</p>
-          ) : categoryMedia.length === 0 ? (
-            <div className="border border-dashed border-zinc-700 rounded-lg py-12 text-center">
-              <p className="text-zinc-600 text-sm">No {activeCategory} photos yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {categoryMedia.map(item => (
-                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-zinc-900">
-                  {item.type === 'video' ? (
-                    <>
-                      <video src={item.url} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer" onClick={() => window.open(item.url, '_blank')}>
-                        <Play size={22} className="text-white" fill="white" />
-                      </div>
-                    </>
-                  ) : (
-                    <img src={item.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => window.open(item.url, '_blank')} />
-                  )}
-                  {isAdmin && (
-                    <button onClick={e => { e.stopPropagation(); deleteMedia(item) }}
-                      className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                      <X size={11} />
-                    </button>
-                  )}
+              {job.approvalRequired && job.approvalStatus !== 'approved' && (
+                <div className="flex items-center gap-2 bg-stone-800/20 border border-amber-800 rounded-md px-3 py-2">
+                  <ShieldAlert size={13} className="text-stone-300 shrink-0" />
+                  <p className="text-stone-200 text-xs">This job requires customer sign-off before it can be invoiced.</p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Estimate */}
-      {activeTab === 'estimate' && (
-        <JobEstimateSection job={job} />
-      )}
-
-      {/* Approval */}
-      {activeTab === 'approval' && (
-        <div className="max-w-lg space-y-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-zinc-300 text-sm font-semibold">Customer Sign-off</p>
-              {isAdmin && (
-                <button onClick={toggleApprovalRequired}
-                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                    job.approvalRequired ? 'bg-stone-800/40 border-stone-500 text-stone-200' : 'border-zinc-600 text-zinc-500 hover:border-zinc-400'
-                  }`}
-                >
-                  <ShieldAlert size={11} />
-                  {job.approvalRequired ? 'Required' : 'Require sign-off'}
-                </button>
               )}
-            </div>
 
-            {job.approvalRequired && job.approvalStatus !== 'approved' && (
-              <div className="flex items-center gap-2 bg-stone-800/20 border border-amber-800 rounded-md px-3 py-2">
-                <ShieldAlert size={13} className="text-stone-300 shrink-0" />
-                <p className="text-stone-200 text-xs">This job requires customer sign-off before it can be invoiced.</p>
-              </div>
-            )}
-
-            {job.approvalStatus === 'approved' && (
-              <div className="flex items-center gap-2 bg-green-900/20 border border-green-800 rounded-md px-3 py-2">
-                <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-                <div>
-                  <p className="text-green-300 text-xs font-medium">Approved by {job.approverName}</p>
-                  {job.approvedAt && (
-                    <p className="text-green-600 text-xs">{new Date(job.approvedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {job.approvalStatus === 'requested' && job.approvalToken && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
-                  <Send size={12} className="text-blue-400 shrink-0" />
-                  <p className="text-blue-300 text-xs">
-                    Approval requested{job.approvalRequestedAt ? ` · ${new Date(job.approvalRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
-                  </p>
-                </div>
-                <button onClick={() => handleCopyLink(job.approvalToken!)}
-                  className="w-full flex items-center justify-between gap-2 bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors">
-                  <span className="truncate font-mono">{`${window.location.origin}/approve/${job.approvalToken}`}</span>
-                  <span className="shrink-0 flex items-center gap-1">
-                    {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {job.approvalStatus === 'none' && canRequestApproval && (
-              <Button variant="outline" size="sm" disabled={sendingApproval} onClick={handleRequestApproval}
-                className="border-zinc-600 text-zinc-300 hover:bg-zinc-700 gap-1.5">
-                <Send size={13} />
-                {sendingApproval ? 'Generating…' : 'Request Customer Approval'}
-              </Button>
-            )}
-
-            {job.approvalStatus === 'none' && !canRequestApproval && (
-              <p className="text-zinc-600 text-sm">No approval requested yet.</p>
-            )}
-          </div>
-
-          {/* Customer preview link */}
-          {job.approvalToken && (
-            <div className="flex items-center gap-2">
-              <FileText size={13} className="text-zinc-500" />
-              <a href={`/approve/${job.approvalToken}`} target="_blank" rel="noopener noreferrer"
-                className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2">
-                Preview customer approval page
-              </a>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Contract Tab */}
-      {activeTab === 'contract' && (
-        <div className="max-w-lg space-y-4">
-          {!jobContract ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-              <p className="text-zinc-300 text-sm font-semibold">Create Contract</p>
-              {templates.length === 0 ? (
-                <p className="text-zinc-500 text-sm">No templates yet. Go to <span className="text-stone-400">Settings → Contract Templates</span> to create one.</p>
-              ) : (
-                <>
-                  {!contractDraftOpen ? (
-                    <Button onClick={() => setContractDraftOpen(true)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5">
-                      <FileSignature size={14} /> Create Contract
-                    </Button>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-zinc-400 text-xs">Template</Label>
-                        <Select value={contractTemplateId} onValueChange={handleTemplateSelect}>
-                          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Select a template…" /></SelectTrigger>
-                          <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {contractTemplateId && (
-                        <>
-                          <div className="space-y-1.5">
-                            <Label className="text-zinc-400 text-xs">Title</Label>
-                            <Input value={contractTitle} onChange={e => setContractTitle(e.target.value)}
-                              className="bg-zinc-800 border-zinc-700 text-white" />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-zinc-400 text-xs">Body</Label>
-                            <textarea value={contractBody} onChange={e => setContractBody(e.target.value)} rows={10}
-                              className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-stone-500" />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setContractDraftOpen(false)}>Cancel</Button>
-                            <Button className="bg-stone-500 hover:bg-stone-400 text-white" onClick={handleCreateContract}
-                              disabled={!contractTitle.trim() || !contractBody.trim()}>
-                              Save Contract
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-zinc-300 text-sm font-semibold">{jobContract.title}</p>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${CONTRACT_STATUS_BADGE[jobContract.status]}`}>
-                  {jobContract.status.charAt(0).toUpperCase() + jobContract.status.slice(1)}
-                </span>
-              </div>
-
-              {jobContract.status === 'signed' && (
-                <div className="flex items-center gap-2 bg-emerald-900/20 border border-emerald-800 rounded-md px-3 py-2">
-                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+              {/* Approved */}
+              {job.approvalStatus === 'approved' && (
+                <div className="flex items-center gap-2 bg-green-900/20 border border-green-800 rounded-md px-3 py-2">
+                  <CheckCircle2 size={14} className="text-green-400 shrink-0" />
                   <div>
-                    <p className="text-emerald-300 text-xs font-medium">Signed by {jobContract.signerName}</p>
-                    {jobContract.signedAt && (
-                      <p className="text-emerald-700 text-xs">{new Date(jobContract.signedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-green-300 text-xs font-medium">Signed off by {job.approverName}</p>
+                    {job.approvedAt && (
+                      <p className="text-green-600 text-xs">{new Date(job.approvedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                     )}
                   </div>
                 </div>
               )}
 
-              {jobContract.status === 'sent' && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
-                    <Send size={12} className="text-blue-400 shrink-0" />
-                    <p className="text-blue-300 text-xs">Awaiting client signature</p>
-                  </div>
-                  <button onClick={() => copySignLink(jobContract.signToken)}
-                    className="w-full flex items-center justify-between gap-2 bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 transition-colors">
-                    <span className="truncate font-mono">{`${window.location.origin}/sign/${jobContract.signToken}`}</span>
-                    <span className="shrink-0 flex items-center gap-1">
-                      {contractCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                      {contractCopied ? 'Copied!' : 'Copy'}
-                    </span>
+              {/* Not yet approved */}
+              {job.approvalStatus !== 'approved' && canRequestApproval && (
+                <div className="space-y-3">
+                  {/* In-person primary option */}
+                  <button
+                    onClick={() => setInPersonOpen(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-stone-500 hover:bg-stone-400 text-white transition-colors text-left"
+                  >
+                    <Smartphone size={16} className="shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Get Sign-off Now</p>
+                      <p className="text-xs text-stone-200">Hand device to customer to sign on screen</p>
+                    </div>
                   </button>
+
+                  <div className="flex items-center gap-2 text-zinc-600 text-xs">
+                    <div className="flex-1 border-t border-zinc-800" />
+                    or send remotely
+                    <div className="flex-1 border-t border-zinc-800" />
+                  </div>
+
+                  {/* Remote option */}
+                  {job.approvalStatus === 'requested' && job.approvalToken ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
+                        <Send size={12} className="text-blue-400 shrink-0" />
+                        <p className="text-blue-300 text-xs">
+                          Request sent{job.approvalRequestedAt ? ` · ${new Date(job.approvalRequestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                        </p>
+                      </div>
+                      <button onClick={() => handleCopyLink(job.approvalToken!)}
+                        className="w-full flex items-center justify-between gap-2 bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors">
+                        <span className="truncate font-mono">{`${window.location.origin}/approve/${job.approvalToken}`}</span>
+                        <span className="shrink-0 flex items-center gap-1">
+                          {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                          {copied ? 'Copied!' : 'Copy'}
+                        </span>
+                      </button>
+                      <button onClick={handleRequestApproval} disabled={sendingApproval}
+                        className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+                        {sendingApproval ? 'Sending…' : 'Resend request'}
+                      </button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled={sendingApproval} onClick={handleRequestApproval}
+                      className="border-zinc-600 text-zinc-300 hover:bg-zinc-800 gap-1.5 w-full justify-center">
+                      <Send size={13} />
+                      {sendingApproval ? 'Sending…' : 'Send Approval Request'}
+                    </Button>
+                  )}
                 </div>
               )}
 
-              {jobContract.status === 'draft' && (
-                <Button onClick={() => handleSendContract(jobContract.id)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5" size="sm">
-                  <Send size={13} /> Send for Signature
-                </Button>
+              {job.approvalStatus !== 'approved' && !canRequestApproval && (
+                <p className="text-zinc-600 text-sm">No approval requested yet.</p>
               )}
+            </div>
 
-              {(jobContract.status === 'draft' || jobContract.status === 'sent') && isAdmin && (
-                <button onClick={() => handleVoidContract(jobContract.id)}
-                  className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
-                  Void contract
-                </button>
-              )}
-
-              <div className="border-t border-zinc-800 pt-3">
-                <p className="text-zinc-500 text-xs mb-2">Contract Preview</p>
-                <pre className="text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap font-sans line-clamp-6">{jobContract.body}</pre>
-                <a href={`/sign/${jobContract.signToken}`} target="_blank" rel="noopener noreferrer"
-                  className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2 mt-2 inline-block">
-                  Preview signing page ↗
+            {job.approvalToken && (
+              <div className="flex items-center gap-2">
+                <FileText size={13} className="text-zinc-500" />
+                <a href={`/approve/${job.approvalToken}`} target="_blank" rel="noopener noreferrer"
+                  className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2">
+                  Preview customer approval page
                 </a>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* In-person sign-off dialog */}
+          <Dialog open={inPersonOpen} onOpenChange={open => {
+            setInPersonOpen(open)
+            if (!open) { setInPersonName(''); sigCanvasRef.current?.clear() }
+          }}>
+            <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Job Completion Sign-off</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-5 mt-1">
+                {/* Job summary */}
+                <div className="bg-zinc-800 rounded-lg p-4 space-y-1.5">
+                  <p className="text-white font-semibold text-sm">{j.title}</p>
+                  {j.address && <p className="text-zinc-400 text-xs">{j.address}</p>}
+                  {j.scope && <p className="text-zinc-400 text-xs mt-1 leading-relaxed line-clamp-4">{j.scope}</p>}
+                </div>
+
+                <p className="text-zinc-400 text-xs leading-relaxed">
+                  By signing below, I confirm that the work described above has been completed to my satisfaction.
+                </p>
+
+                {/* Signature canvas */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-zinc-400 text-xs">Signature</Label>
+                    <button onClick={() => sigCanvasRef.current?.clear()}
+                      className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors">
+                      Clear
+                    </button>
+                  </div>
+                  <SignatureCanvas
+                    ref={sigCanvasRef}
+                    className="w-full h-36 rounded-lg bg-zinc-800 border border-zinc-700 cursor-crosshair"
+                  />
+                  <p className="text-zinc-600 text-[10px]">Draw your signature above</p>
+                </div>
+
+                {/* Name */}
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-400 text-xs">Full Name</Label>
+                  <input
+                    type="text"
+                    placeholder="Customer's full name"
+                    value={inPersonName}
+                    onChange={e => setInPersonName(e.target.value)}
+                    className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-500"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-6">
+                <Button variant="ghost" className="text-zinc-400" onClick={() => setInPersonOpen(false)}>Cancel</Button>
+                <Button
+                  className="bg-stone-500 hover:bg-stone-400 text-white"
+                  disabled={!inPersonName.trim() || inPersonSaving}
+                  onClick={handleInPersonApproval}
+                >
+                  {inPersonSaving ? 'Saving…' : 'Sign Off'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Contract */}
+          <div className="border-t border-zinc-800 pt-6 max-w-lg space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Contract</p>
+            {!jobContract ? (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+                <p className="text-zinc-300 text-sm font-semibold">Create Contract</p>
+                {templates.length === 0 ? (
+                  <p className="text-zinc-500 text-sm">No templates yet. Go to <span className="text-stone-400">Settings → Contract Templates</span> to create one.</p>
+                ) : (
+                  <>
+                    {!contractDraftOpen ? (
+                      <Button onClick={() => setContractDraftOpen(true)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5">
+                        <FileSignature size={14} /> Create Contract
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-zinc-400 text-xs">Template</Label>
+                          <Select value={contractTemplateId} onValueChange={handleTemplateSelect}>
+                            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Select a template…" /></SelectTrigger>
+                            <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                              {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {contractTemplateId && (
+                          <>
+                            <div className="space-y-1.5">
+                              <Label className="text-zinc-400 text-xs">Title</Label>
+                              <Input value={contractTitle} onChange={e => setContractTitle(e.target.value)}
+                                className="bg-zinc-800 border-zinc-700 text-white" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-zinc-400 text-xs">Body</Label>
+                              <textarea value={contractBody} onChange={e => setContractBody(e.target.value)} rows={10}
+                                className="w-full rounded-md bg-zinc-800 border border-zinc-700 text-white px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-stone-500" />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => setContractDraftOpen(false)}>Cancel</Button>
+                              <Button className="bg-stone-500 hover:bg-stone-400 text-white" onClick={handleCreateContract}
+                                disabled={!contractTitle.trim() || !contractBody.trim()}>
+                                Save Contract
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-zinc-300 text-sm font-semibold">{jobContract.title}</p>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${CONTRACT_STATUS_BADGE[jobContract.status]}`}>
+                    {jobContract.status.charAt(0).toUpperCase() + jobContract.status.slice(1)}
+                  </span>
+                </div>
+
+                {jobContract.status === 'signed' && (
+                  <div className="flex items-center gap-2 bg-emerald-900/20 border border-emerald-800 rounded-md px-3 py-2">
+                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                    <div>
+                      <p className="text-emerald-300 text-xs font-medium">Signed by {jobContract.signerName}</p>
+                      {jobContract.signedAt && (
+                        <p className="text-emerald-700 text-xs">{new Date(jobContract.signedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {jobContract.status === 'sent' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-800 rounded-md px-3 py-2">
+                      <Send size={12} className="text-blue-400 shrink-0" />
+                      <p className="text-blue-300 text-xs">Awaiting client signature</p>
+                    </div>
+                    <button onClick={() => copySignLink(jobContract.signToken)}
+                      className="w-full flex items-center justify-between gap-2 bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-xs text-zinc-400 hover:border-zinc-500 transition-colors">
+                      <span className="truncate font-mono">{`${window.location.origin}/sign/${jobContract.signToken}`}</span>
+                      <span className="shrink-0 flex items-center gap-1">
+                        {contractCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        {contractCopied ? 'Copied!' : 'Copy'}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {jobContract.status === 'draft' && (
+                  <Button onClick={() => handleSendContract(jobContract.id)} className="bg-stone-500 hover:bg-stone-400 text-white gap-1.5" size="sm">
+                    <Send size={13} /> Send for Signature
+                  </Button>
+                )}
+
+                {(jobContract.status === 'draft' || jobContract.status === 'sent') && isAdmin && (
+                  <button onClick={() => handleVoidContract(jobContract.id)}
+                    className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
+                    Void contract
+                  </button>
+                )}
+
+                <div className="border-t border-zinc-800 pt-3">
+                  <p className="text-zinc-500 text-xs mb-2">Contract Preview</p>
+                  <pre className="text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap font-sans line-clamp-6">{jobContract.body}</pre>
+                  <a href={`/sign/${jobContract.signToken}`} target="_blank" rel="noopener noreferrer"
+                    className="text-stone-400 hover:text-stone-300 text-xs underline underline-offset-2 mt-2 inline-block">
+                    Preview signing page ↗
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* Financials — Invoices / Payments / Expenses + P&L */}
+      {activeTab === 'financials' && (
+        <div className="space-y-8">
+          <JobFinancialsTab job={j} canEdit={canBill} />
+          <div className="border-t border-zinc-800 pt-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-5">Profit & Loss</p>
+            <JobPLTab job={j} />
+          </div>
+        </div>
+      )}
+
+      </ErrorBoundary>
 
       {/* Edit Job Dialog */}
       {draft && (

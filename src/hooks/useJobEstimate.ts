@@ -24,6 +24,7 @@ function toEstimate(row: Record<string, unknown>): Estimate {
     declineReason: (row.decline_reason as string) ?? '',
     convertedJobId: (row.converted_job_id as string) ?? null,
     jobId: (row.job_id as string) ?? null,
+    reviewToken: (row.review_token as string) ?? null,
     createdAt: (row.created_at as string) ?? '',
     updatedAt: (row.updated_at as string) ?? '',
   }

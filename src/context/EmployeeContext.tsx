@@ -29,6 +29,7 @@ function toEmployee(row: Record<string, unknown>): Employee {
     emergencyPhone: (row.emergency_phone as string) ?? '',
     notes: (row.notes as string) ?? '',
     profilePicture: (row.profile_picture as string) ?? '',
+    hourlyRate: (row.hourly_rate as number) ?? 0,
   }
 }
 
@@ -70,6 +71,7 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       emergency_phone: emp.emergencyPhone,
       notes: emp.notes,
       profile_picture: emp.profilePicture,
+      hourly_rate: emp.hourlyRate,
     }).select().single()
     if (data && !error) setEmployees(prev => [...prev, toEmployee(data)])
   }
@@ -88,6 +90,7 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       emergency_phone: updated.emergencyPhone,
       notes: updated.notes,
       profile_picture: updated.profilePicture,
+      hourly_rate: updated.hourlyRate,
     }).eq('id', updated.id)
     if (error) return error.message
     setEmployees(prev => prev.map(e => e.id === updated.id ? updated : e))
